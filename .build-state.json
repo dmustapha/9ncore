@@ -1,11 +1,11 @@
 {
   "project": "privlend",
   "currentPhase": "phase-1",
-  "currentStep": "1.3",
-  "currentSubStep": "1.3.a",
+  "currentStep": "1.4",
+  "currentSubStep": "1.4.a",
   "status": "in-progress",
   "autonomous_mode": true,
-  "completedSteps": ["1.1.a", "1.1.b", "1.1.c", "1.2.a"],
+  "completedSteps": ["1.1.a", "1.1.b", "1.1.c", "1.2.a", "1.3.a"],
   "fileGroups": {
     "1.1.a": {
       "files": ["BUILD-REPORT.md"],
@@ -24,6 +24,11 @@
     },
     "1.2.a": {
       "files": ["scripts/spike-fhevm.ts"],
+      "written": true,
+      "verified": true
+    },
+    "1.3.a": {
+      "files": ["frontend/next.config.js", "frontend/package.json", "frontend/app/layout.tsx", "frontend/app/page.tsx"],
       "written": true,
       "verified": true
     }
@@ -64,6 +69,24 @@
       "actual": "@zama-fhe/relayer-sdk@0.4.1",
       "reason": "Plugin peer dep constraint; 0.4.3 breaks peer dep resolution",
       "impact": "minor — createInstance API identical in 0.4.1 vs 0.4.3 (patch-only)"
+    },
+    {
+      "id": "DEV-005",
+      "step": "1.2.a",
+      "component": "ARCHITECTURE.md — FHEVM ACL Sepolia address",
+      "description": "Architecture had stale ACL address 0x339EcE85B9E11a3A3AA557582784a15d7F82AAa3",
+      "actual": "0xf0Ffdc93b7E186bC2f8CB3dAA75D86d1930A433D (from @fhevm/mock-utils SepoliaConfig)",
+      "reason": "getCode() against arch address returned 0x (no contract deployed there)",
+      "impact": "significant — all ACL allowance calls must use correct address; deploy scripts unaffected (plugin auto-configures)"
+    },
+    {
+      "id": "DEV-006",
+      "step": "1.3.a",
+      "component": "frontend/next.config.js — Turbopack vs webpack",
+      "description": "ARCHITECTURE.md assumed Next.js 14 + webpack; create-next-app@16.2.5 generates Next.js 16 with Turbopack as default",
+      "actual": "next.config.js: turbopack: {} added alongside webpack asyncWebAssembly config; Turbopack has native WASM support so no explicit WASM config needed there",
+      "reason": "Next.js 16 enables Turbopack by default; build error without turbopack:{} key when webpack config is also present",
+      "impact": "none — build compiles successfully in 3.7s; WASM handled natively by Turbopack; webpack config retained for explicit --webpack mode"
     }
   ],
   "contractAddresses": {},
@@ -79,17 +102,18 @@
     "grep asEuint128 FHE.sol → found at line 946 (DT-5 confirmed)",
     "grep min FHE.sol → euint128 min variant confirmed (partial liquidation confirmed)",
     "npx hardhat compile → Nothing to compile. No errors. (1.1.c PASS)",
-    "npx hardhat run scripts/spike-fhevm.ts --network sepolia → ACL code length: 342 ✅ FHEVM ACL contract is live on Sepolia (1.2.a PASS)"
+    "npx hardhat run scripts/spike-fhevm.ts --network sepolia → ACL code length: 342 ✅ FHEVM ACL contract is live on Sepolia (1.2.a PASS)",
+    "cd frontend && npm run build → ✓ Compiled successfully in 3.7s, 4/4 static pages (1.3.a PASS)"
   ],
   "screenshot_paths": [],
-  "context_percentage": 22,
-  "timestamp": "2026-05-07T18:30:00Z",
+  "context_percentage": 28,
+  "timestamp": "2026-05-07T20:00:00Z",
   "phase_ledger": [
     {
       "phase": "Phase 1: Scaffold & Spike",
       "started_at": "2026-05-07T15:00:00Z",
       "completed_at": null,
-      "evidence": "1.1.a spike complete: DT-1/DT-2/DT-5 resolved, BUILD-REPORT.md written; 1.1.b DOMAIN-GUIDE.md with 13 concepts; 1.1.c Hardhat 2.22.x installed, compile PASS, DEV-002/003/004 logged"
+      "evidence": "1.1.a spike complete: DT-1/DT-2/DT-5 resolved, BUILD-REPORT.md written; 1.1.b DOMAIN-GUIDE.md with 13 concepts; 1.1.c Hardhat 2.22.x installed, compile PASS, DEV-002/003/004 logged; 1.2.a ACL spike PASS (code length 342); 1.3.a Next.js 16.2.5 scaffold with WASM config, build PASS in 3.7s, DEV-006 logged"
     }
   ],
   "expected_phases": [
