@@ -1,0 +1,11 @@
+node_modules/
+cache/
+artifacts/
+typechain-types/
+.env
+fhevmTemp/
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+*.log
+dist/
