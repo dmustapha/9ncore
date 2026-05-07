@@ -1,0 +1,102 @@
+{
+  "project": "privlend",
+  "currentPhase": "phase-1",
+  "currentStep": "1.3",
+  "currentSubStep": "1.3.a",
+  "status": "in-progress",
+  "autonomous_mode": true,
+  "completedSteps": ["1.1.a", "1.1.b", "1.1.c", "1.2.a"],
+  "fileGroups": {
+    "1.1.a": {
+      "files": ["BUILD-REPORT.md"],
+      "written": true,
+      "verified": true
+    },
+    "1.1.b": {
+      "files": ["DOMAIN-GUIDE.md"],
+      "written": true,
+      "verified": true
+    },
+    "1.1.c": {
+      "files": ["package.json", "hardhat.config.ts", "tsconfig.json", ".env", ".env.example"],
+      "written": true,
+      "verified": true
+    },
+    "1.2.a": {
+      "files": ["scripts/spike-fhevm.ts"],
+      "written": true,
+      "verified": true
+    }
+  },
+  "deviations": [
+    {
+      "id": "DEV-001",
+      "step": "1.1.a",
+      "component": "PrivLendPool.sol — interest accrual",
+      "description": "FHE.mul(euint128, uint8) scalar plaintext multiply does not exist in FHE.sol",
+      "actual": "FHE.mul(debt, FHE.asEuint128(uint256(bps))) — encrypted-encrypted multiply",
+      "reason": "No scalar plaintext mul variant for euint128 in @fhevm/solidity",
+      "impact": "minor — all interest calculations wrap BPS in asEuint128() first"
+    },
+    {
+      "id": "DEV-002",
+      "step": "1.1.c",
+      "component": "package.json — Hardhat version",
+      "description": "Hardhat 3.x is ESM-only; project uses commonjs; @fhevm/hardhat-plugin@0.4.2 requires hardhat ^2.0.0",
+      "actual": "hardhat@^2.22.0 + @nomicfoundation/hardhat-toolbox@^5.0.0",
+      "reason": "Hardhat 3.x incompatible with CommonJS project and FHEVM plugin peer deps",
+      "impact": "none — Hardhat 2.22.x provides identical capabilities"
+    },
+    {
+      "id": "DEV-003",
+      "step": "1.1.c",
+      "component": "@fhevm/hardhat-plugin version",
+      "description": "Architecture specified ^0.6.0 but latest published version is 0.4.2",
+      "actual": "@fhevm/hardhat-plugin@0.4.2",
+      "reason": "0.6.0 does not exist on npm registry",
+      "impact": "none — 0.4.2 is production-stable with full FHEVM support"
+    },
+    {
+      "id": "DEV-004",
+      "step": "1.1.c",
+      "component": "@zama-fhe/relayer-sdk version",
+      "description": "Architecture specified 0.4.3 but @fhevm/hardhat-plugin@0.4.2 peerDeps require 0.4.1",
+      "actual": "@zama-fhe/relayer-sdk@0.4.1",
+      "reason": "Plugin peer dep constraint; 0.4.3 breaks peer dep resolution",
+      "impact": "minor — createInstance API identical in 0.4.1 vs 0.4.3 (patch-only)"
+    }
+  ],
+  "contractAddresses": {},
+  "env": {
+    "DEPLOYER_PRIVATE_KEY": "set",
+    "SEPOLIA_RPC_URL": "https://ethereum-sepolia-rpc.publicnode.com"
+  },
+  "devPort": 3000,
+  "depsVerified": true,
+  "verification_commands": [
+    "grep -n 'scalar|ScalarMul|mul.*uint128[^e]' FHE.sol → ZERO MATCHES (DT-1 fallback confirmed)",
+    "grep createInstance web.d.ts → createInstance(config: FhevmInstanceConfig): Promise<FhevmInstance> at line 438 (DT-2 confirmed)",
+    "grep asEuint128 FHE.sol → found at line 946 (DT-5 confirmed)",
+    "grep min FHE.sol → euint128 min variant confirmed (partial liquidation confirmed)",
+    "npx hardhat compile → Nothing to compile. No errors. (1.1.c PASS)",
+    "npx hardhat run scripts/spike-fhevm.ts --network sepolia → ACL code length: 342 ✅ FHEVM ACL contract is live on Sepolia (1.2.a PASS)"
+  ],
+  "screenshot_paths": [],
+  "context_percentage": 22,
+  "timestamp": "2026-05-07T18:30:00Z",
+  "phase_ledger": [
+    {
+      "phase": "Phase 1: Scaffold & Spike",
+      "started_at": "2026-05-07T15:00:00Z",
+      "completed_at": null,
+      "evidence": "1.1.a spike complete: DT-1/DT-2/DT-5 resolved, BUILD-REPORT.md written; 1.1.b DOMAIN-GUIDE.md with 13 concepts; 1.1.c Hardhat 2.22.x installed, compile PASS, DEV-002/003/004 logged"
+    }
+  ],
+  "expected_phases": [
+    "Phase 1: Scaffold & Spike",
+    "Phase 2: Smart Contracts",
+    "Phase 3: Deploy to Sepolia",
+    "Phase 4: Frontend",
+    "Phase 5: Integration & Demo Prep"
+  ]
+}
