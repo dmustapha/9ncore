@@ -3,7 +3,7 @@ import "./globals.css";
 import { WagmiProviderWrapper } from "@/components/WagmiProviderWrapper";
 
 export const metadata: Metadata = {
-  title: "PrivLend — Confidential Lending Pool",
+  title: "9ncore — Confidential Lending Pool",
   description:
     "Encrypted DeFi lending powered by Zama FHEVM. Your collateral and debt stay private.",
 };

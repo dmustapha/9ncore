@@ -5,6 +5,7 @@ import DepositPanel from "@/components/DepositPanel";
 import BorrowPanel from "@/components/BorrowPanel";
 import RepayPanel from "@/components/RepayPanel";
 import HealthPanel from "@/components/HealthPanel";
+import PositionPanel from "@/components/PositionPanel";
 import { CONTRACT_ADDRESS } from "@/lib/contract";
 
 export default function Home() {
@@ -16,7 +17,7 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <span className="text-3xl">🔐</span>
             <div>
-              <h1 className="text-white font-bold text-xl gradient-text">PrivLend</h1>
+              <h1 className="text-white font-bold text-xl gradient-text">9ncore</h1>
               <p className="text-gray-500 text-xs">Confidential Lending Pool</p>
             </div>
           </div>
@@ -109,8 +110,9 @@ export default function Home() {
           <RepayPanel />
         </div>
 
-        {/* Health Check (full width) */}
-        <div className="mt-6">
+        {/* Position + Health (full width) */}
+        <div className="mt-6 grid md:grid-cols-2 gap-6">
+          <PositionPanel />
           <HealthPanel />
         </div>
 
@@ -147,7 +149,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="border-t border-white/5 mt-16 py-8 text-center text-gray-600 text-sm">
-        <p>PrivLend — Zama Developer Program Mainnet S2</p>
+        <p>9ncore — Zama Developer Program Mainnet S2</p>
         <p className="mt-1">
           Built with{" "}
           <a href="https://www.zama.ai/fhevm" className="text-fhe-purple hover:underline">
