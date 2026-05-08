@@ -1,98 +1,102 @@
 {
   "project": "privlend",
-  "currentPhase": "phase-1",
-  "currentStep": "1.4",
-  "currentSubStep": "1.4.a",
+  "currentPhase": "phase-5",
+  "currentStep": "5.1",
+  "currentSubStep": "5.1.a",
   "status": "in-progress",
   "autonomous_mode": true,
-  "completedSteps": ["1.1.a", "1.1.b", "1.1.c", "1.2.a", "1.3.a"],
+  "completedSteps": ["1.1.a", "1.1.b", "1.1.c", "1.2.a", "1.3.a", "2.1.a", "2.2.a", "3.1.a", "3.2.a", "3.3.a", "4.1.a", "4.1.b", "4.1.c", "4.1.d"],
   "fileGroups": {
-    "1.1.a": {
-      "files": ["BUILD-REPORT.md"],
+    "1.1.a": {"files": ["BUILD-REPORT.md"], "written": true, "verified": true},
+    "1.1.b": {"files": ["DOMAIN-GUIDE.md"], "written": true, "verified": true},
+    "1.1.c": {"files": ["package.json", "hardhat.config.ts", "tsconfig.json", ".env", ".env.example"], "written": true, "verified": true},
+    "1.2.a": {"files": ["scripts/spike-fhevm.ts"], "written": true, "verified": true},
+    "1.3.a": {"files": ["frontend/next.config.js", "frontend/package.json", "frontend/app/layout.tsx", "frontend/app/page.tsx"], "written": true, "verified": true},
+    "2.1.a": {"files": ["contracts/PrivLendPool.sol"], "written": true, "verified": true},
+    "2.2.a": {"files": ["test/PrivLendPool.test.ts"], "written": true, "verified": true},
+    "3.1.a": {"files": ["scripts/deploy.ts"], "written": true, "verified": true},
+    "3.2.a": {"files": ["hardhat.config.ts"], "written": true, "verified": true},
+    "3.3.a": {"files": ["scripts/seed-demo.ts", "submission/proof.md"], "written": true, "verified": true},
+    "4.1.a": {
+      "files": [
+        "frontend/lib/contract.ts",
+        "frontend/lib/utils.ts",
+        "frontend/lib/fhevm.ts",
+        "frontend/hooks/useFHEVM.ts",
+        "frontend/hooks/usePoolStats.ts",
+        "frontend/hooks/usePosition.ts"
+      ],
       "written": true,
       "verified": true
     },
-    "1.1.b": {
-      "files": ["DOMAIN-GUIDE.md"],
+    "4.1.b": {
+      "files": [
+        "frontend/components/FHEProgress.tsx",
+        "frontend/components/ConnectWallet.tsx",
+        "frontend/components/WagmiProviderWrapper.tsx",
+        "frontend/components/PoolStats.tsx",
+        "frontend/components/LenderPanel.tsx",
+        "frontend/components/DepositPanel.tsx",
+        "frontend/components/BorrowPanel.tsx",
+        "frontend/components/RepayPanel.tsx",
+        "frontend/components/HealthPanel.tsx"
+      ],
       "written": true,
       "verified": true
     },
-    "1.1.c": {
-      "files": ["package.json", "hardhat.config.ts", "tsconfig.json", ".env", ".env.example"],
+    "4.1.c": {
+      "files": [
+        "frontend/app/globals.css",
+        "frontend/app/layout.tsx",
+        "frontend/app/page.tsx",
+        "frontend/app/.env.local"
+      ],
       "written": true,
       "verified": true
     },
-    "1.2.a": {
-      "files": ["scripts/spike-fhevm.ts"],
-      "written": true,
-      "verified": true
-    },
-    "1.3.a": {
-      "files": ["frontend/next.config.js", "frontend/package.json", "frontend/app/layout.tsx", "frontend/app/page.tsx"],
+    "4.1.d": {
+      "files": [
+        "frontend/next.config.ts",
+        "frontend/lib/empty-stub.js"
+      ],
       "written": true,
       "verified": true
     }
   },
   "deviations": [
-    {
-      "id": "DEV-001",
-      "step": "1.1.a",
-      "component": "PrivLendPool.sol — interest accrual",
-      "description": "FHE.mul(euint128, uint8) scalar plaintext multiply does not exist in FHE.sol",
-      "actual": "FHE.mul(debt, FHE.asEuint128(uint256(bps))) — encrypted-encrypted multiply",
-      "reason": "No scalar plaintext mul variant for euint128 in @fhevm/solidity",
-      "impact": "minor — all interest calculations wrap BPS in asEuint128() first"
-    },
-    {
-      "id": "DEV-002",
-      "step": "1.1.c",
-      "component": "package.json — Hardhat version",
-      "description": "Hardhat 3.x is ESM-only; project uses commonjs; @fhevm/hardhat-plugin@0.4.2 requires hardhat ^2.0.0",
-      "actual": "hardhat@^2.22.0 + @nomicfoundation/hardhat-toolbox@^5.0.0",
-      "reason": "Hardhat 3.x incompatible with CommonJS project and FHEVM plugin peer deps",
-      "impact": "none — Hardhat 2.22.x provides identical capabilities"
-    },
-    {
-      "id": "DEV-003",
-      "step": "1.1.c",
-      "component": "@fhevm/hardhat-plugin version",
-      "description": "Architecture specified ^0.6.0 but latest published version is 0.4.2",
-      "actual": "@fhevm/hardhat-plugin@0.4.2",
-      "reason": "0.6.0 does not exist on npm registry",
-      "impact": "none — 0.4.2 is production-stable with full FHEVM support"
-    },
-    {
-      "id": "DEV-004",
-      "step": "1.1.c",
-      "component": "@zama-fhe/relayer-sdk version",
-      "description": "Architecture specified 0.4.3 but @fhevm/hardhat-plugin@0.4.2 peerDeps require 0.4.1",
-      "actual": "@zama-fhe/relayer-sdk@0.4.1",
-      "reason": "Plugin peer dep constraint; 0.4.3 breaks peer dep resolution",
-      "impact": "minor — createInstance API identical in 0.4.1 vs 0.4.3 (patch-only)"
-    },
-    {
-      "id": "DEV-005",
-      "step": "1.2.a",
-      "component": "ARCHITECTURE.md — FHEVM ACL Sepolia address",
-      "description": "Architecture had stale ACL address 0x339EcE85B9E11a3A3AA557582784a15d7F82AAa3",
-      "actual": "0xf0Ffdc93b7E186bC2f8CB3dAA75D86d1930A433D (from @fhevm/mock-utils SepoliaConfig)",
-      "reason": "getCode() against arch address returned 0x (no contract deployed there)",
-      "impact": "significant — all ACL allowance calls must use correct address; deploy scripts unaffected (plugin auto-configures)"
-    },
-    {
-      "id": "DEV-006",
-      "step": "1.3.a",
-      "component": "frontend/next.config.js — Turbopack vs webpack",
-      "description": "ARCHITECTURE.md assumed Next.js 14 + webpack; create-next-app@16.2.5 generates Next.js 16 with Turbopack as default",
-      "actual": "next.config.js: turbopack: {} added alongside webpack asyncWebAssembly config; Turbopack has native WASM support so no explicit WASM config needed there",
-      "reason": "Next.js 16 enables Turbopack by default; build error without turbopack:{} key when webpack config is also present",
-      "impact": "none — build compiles successfully in 3.7s; WASM handled natively by Turbopack; webpack config retained for explicit --webpack mode"
-    }
+    {"id": "DEV-001", "step": "1.1.a", "component": "PrivLendPool.sol — interest accrual", "description": "FHE.mul(euint128, uint8) scalar plaintext multiply does not exist in FHE.sol", "actual": "FHE.mul(debt, FHE.asEuint128(uint256(bps))) — encrypted-encrypted multiply", "reason": "No scalar plaintext mul variant for euint128 in @fhevm/solidity", "impact": "minor — all interest calculations wrap BPS in asEuint128() first"},
+    {"id": "DEV-001-CORRECTION", "step": "2.1.a", "component": "DEV-001 scalar mul — CORRECTED", "description": "FHE.mul(euint128, uint128) EXISTS at FHE.sol line 6847. DEV-001 assessment was wrong.", "actual": "Contract uses FHE.mul(_debt, interestBpsU8) with implicit uint8→uint128 widening. Correct as written.", "reason": "Initial grep pattern too narrow", "impact": "none — contract is correct, no asEuint128 wrapping needed"},
+    {"id": "DEV-002", "step": "1.1.c", "component": "package.json — Hardhat version", "description": "Hardhat 3.x is ESM-only; project uses commonjs; @fhevm/hardhat-plugin@0.4.2 requires hardhat ^2.0.0", "actual": "hardhat@^2.22.0 + @nomicfoundation/hardhat-toolbox@^5.0.0", "reason": "Hardhat 3.x incompatible with CommonJS project and FHEVM plugin peer deps", "impact": "none — Hardhat 2.22.x provides identical capabilities"},
+    {"id": "DEV-003", "step": "1.1.c", "component": "@fhevm/hardhat-plugin version", "description": "Architecture specified ^0.6.0 but latest published version is 0.4.2", "actual": "@fhevm/hardhat-plugin@0.4.2", "reason": "0.6.0 does not exist on npm registry", "impact": "none — 0.4.2 is production-stable with full FHEVM support"},
+    {"id": "DEV-004", "step": "1.1.c", "component": "@zama-fhe/relayer-sdk version", "description": "Architecture specified 0.4.3 but @fhevm/hardhat-plugin@0.4.2 peerDeps require 0.4.1", "actual": "@zama-fhe/relayer-sdk@0.4.1", "reason": "Plugin peer dep constraint; 0.4.3 breaks peer dep resolution", "impact": "minor — createInstance API identical in 0.4.1 vs 0.4.3 (patch-only)"},
+    {"id": "DEV-005", "step": "1.2.a", "component": "ARCHITECTURE.md — FHEVM ACL Sepolia address", "description": "Architecture had stale ACL address 0x339EcE85B9E11a3A3AA557582784a15d7F82AAa3", "actual": "0xf0Ffdc93b7E186bC2f8CB3dAA75D86d1930A433D (from @fhevm/mock-utils SepoliaConfig)", "reason": "getCode() against arch address returned 0x (no contract deployed there)", "impact": "significant — all ACL allowance calls must use correct address"},
+    {"id": "DEV-006", "step": "1.3.a", "component": "frontend/next.config.js — Turbopack vs webpack", "description": "ARCHITECTURE.md assumed Next.js 14 + webpack; create-next-app@16.2.5 generates Next.js 16 with Turbopack as default", "actual": "next.config.js: turbopack: {} added alongside webpack asyncWebAssembly config", "reason": "Next.js 16 enables Turbopack by default", "impact": "none — build compiles successfully"},
+    {"id": "DEV-007", "step": "2.1.a", "component": "PrivLendPool.sol — FHE.fromExternal first argument type", "description": "Architecture assumed raw bytes32 as first arg to FHE.fromExternal", "actual": "FHE.fromExternal(externalEuint128.wrap(inputHandle), inputProof) — typed wrapper required", "reason": "FHE.sol line 8624 requires externalEuint128 user-defined value type", "impact": "none — correct API now used"},
+    {"id": "DEV-008", "step": "2.2.a", "component": "test/PrivLendPool.test.ts — FHEVM instance creation", "description": "createFhevmInstance from @zama-fhe/relayer-sdk root causes ERR_PACKAGE_PATH_NOT_EXPORTED", "actual": "hre.fhevm.createEncryptedInput() from @fhevm/hardhat-plugin", "reason": "No root export in relayer-sdk@0.4.1; hre.fhevm is the correct test API", "impact": "none — identical interface"},
+    {"id": "DEV-009", "step": "2.1.a", "component": "PrivLendPool.sol — CoprocessorConfig uninitialized", "description": "Contract needed ZamaEthereumConfig inheritance for FHE coprocessor setup", "actual": "contract PrivLendPool is ZamaEthereumConfig", "reason": "Without inheritance, FHE.setCoprocessor() never called — reverts on FHE.fromExternal", "impact": "significant — required for both local tests and Sepolia deploy"},
+    {"id": "DEV-010", "step": "3.3.a", "component": "scripts/seed-demo.ts — FHEVM instance creation", "description": "createFhevmInstance from root import + manual address config", "actual": "createInstance from @zama-fhe/relayer-sdk/node + SepoliaConfig spread", "reason": "Same root import problem as DEV-008; createFhevmInstance is web subpath name only", "impact": "none — correct Node.js API used"},
+    {"id": "DEV-011", "step": "4.1.a", "component": "frontend/tsconfig.json — TypeScript target", "description": "tsconfig.json had target: ES2017 but lib/utils.ts uses BigInt literals (100n, 150n)", "actual": "Changed target to ES2020 + deleted .tsbuildinfo cache to force re-type-check", "reason": "BigInt literals require ES2020+ target; tsc error TS2737", "impact": "none — ES2020 fully supported by all modern browsers"},
+    {"id": "DEV-012", "step": "4.1.c", "component": "frontend/app/globals.css — Tailwind v4 syntax", "description": "ARCHITECTURE.md assumed Tailwind v3 with tailwind.config.ts for custom colors", "actual": "Tailwind v4 @import 'tailwindcss' + @theme {} block for custom color variables (--color-fhe-purple etc.)", "reason": "Tailwind v4 uses CSS-native @theme directive; tailwind.config.ts not used for theme", "impact": "none — colors work correctly with v4 @theme"},
+    {"id": "DEV-013", "step": "4.1.d", "component": "next.config.ts — Turbopack production build deadlock", "description": "ARCHITECTURE.md assumed webpack; Next.js 16 Turbopack deadlocks at optimization phase with @zama-fhe/relayer-sdk/web (1.2MB JS + 4.5MB WASM)", "actual": "Force webpack mode via `next build --webpack` CLI flag (discovered in Next.js 16 CLI source)", "reason": "Turbopack hangs at 0% CPU indefinitely; even dynamic imports don't help (module still traced)", "impact": "significant — build script must always use --webpack flag"},
+    {"id": "DEV-014", "step": "4.1.d", "component": "frontend/lib/fhevm.ts — static import replaced with dynamic import", "description": "Static import of @zama-fhe/relayer-sdk/web kept it in the module graph even in Turbopack", "actual": "await import('@zama-fhe/relayer-sdk/web') inside async functions only; type-only import via Awaited<ReturnType<>>", "reason": "Prevents bundler from statically analyzing 4.5MB WASM module; needed for both Turbopack (DEV-013) and production safety", "impact": "none — SDK loaded at runtime only, identical behavior"},
+    {"id": "DEV-015", "step": "4.1.d", "component": "next.config.ts — package.json build script", "description": "Default `next build` uses Turbopack in Next.js 16; `turbopack: undefined` in config does not disable it", "actual": "Build script updated to `next build --webpack`; confirmed via Next.js CLI source showing explicit --webpack flag", "reason": "Next.js 16 ignores turbopack config key for disabling; only CLI flag works", "impact": "minor — build command documented in package.json scripts"},
+    {"id": "DEV-016", "step": "4.1.b", "component": "frontend/components — wagmi/connectors import", "description": "ARCHITECTURE.md used `import { injected } from 'wagmi/connectors'` which pulls in wagmi's Tempo wallet connector bundle", "actual": "Changed to `import { injected } from 'wagmi'` — injected is re-exported from main wagmi index", "reason": "wagmi/connectors bundle includes @wagmi/core/dist/esm/tempo/Connectors.js which dynamically imports optional 'accounts' package; webpack fails on unresolved bare specifier", "impact": "none — injected() behavior identical from either import path"}
   ],
-  "contractAddresses": {},
+  "contractAddresses": {
+    "PrivLendPool": {
+      "address": "0xbC411fc4D05c76fbf607a49E0b454e16342406Cb",
+      "network": "sepolia",
+      "chainId": 11155111,
+      "deployTxHash": "0x6f370735c2457989f7c71e6e2751578ebffd79d78eaa1984ede5b54c4ea15d0c",
+      "block": 10806284,
+      "verified": true,
+      "verificationUrl": "https://repo.sourcify.dev/contracts/full_match/11155111/0xbC411fc4D05c76fbf607a49E0b454e16342406Cb/"
+    }
+  },
   "env": {
     "DEPLOYER_PRIVATE_KEY": "set",
-    "SEPOLIA_RPC_URL": "https://ethereum-sepolia-rpc.publicnode.com"
+    "SEPOLIA_RPC_URL": "https://ethereum-sepolia-rpc.publicnode.com",
+    "PRIVLEND_POOL_ADDRESS": "0xbC411fc4D05c76fbf607a49E0b454e16342406Cb"
   },
   "devPort": 3000,
   "depsVerified": true,
@@ -103,17 +107,40 @@
     "grep min FHE.sol → euint128 min variant confirmed (partial liquidation confirmed)",
     "npx hardhat compile → Nothing to compile. No errors. (1.1.c PASS)",
     "npx hardhat run scripts/spike-fhevm.ts --network sepolia → ACL code length: 342 ✅ FHEVM ACL contract is live on Sepolia (1.2.a PASS)",
-    "cd frontend && npm run build → ✓ Compiled successfully in 3.7s, 4/4 static pages (1.3.a PASS)"
+    "cd frontend && npm run build → ✓ Compiled successfully in 3.7s, 4/4 static pages (1.3.a PASS)",
+    "npx hardhat test → 8 passing (174ms) (2.2.a PASS)",
+    "npx hardhat run scripts/deploy.ts --network sepolia → PrivLendPool deployed to: 0xbC411fc4D05c76fbf607a49E0b454e16342406Cb (3.1.a PASS)",
+    "npx hardhat verify --network sepolia → Successfully verified contract PrivLendPool on Sourcify (3.2.a PASS)",
+    "tsc --noEmit → 0 errors (4.1 TypeScript PASS)",
+    "next build --webpack → ✓ Compiled with warnings in 6.2s, 4/4 static pages (4.1 build gate PASS)"
   ],
   "screenshot_paths": [],
-  "context_percentage": 28,
-  "timestamp": "2026-05-07T20:00:00Z",
+  "context_percentage": 70,
+  "timestamp": "2026-05-08T05:35:00Z",
   "phase_ledger": [
     {
       "phase": "Phase 1: Scaffold & Spike",
       "started_at": "2026-05-07T15:00:00Z",
-      "completed_at": null,
+      "completed_at": "2026-05-07T18:00:00Z",
       "evidence": "1.1.a spike complete: DT-1/DT-2/DT-5 resolved, BUILD-REPORT.md written; 1.1.b DOMAIN-GUIDE.md with 13 concepts; 1.1.c Hardhat 2.22.x installed, compile PASS, DEV-002/003/004 logged; 1.2.a ACL spike PASS (code length 342); 1.3.a Next.js 16.2.5 scaffold with WASM config, build PASS in 3.7s, DEV-006 logged"
+    },
+    {
+      "phase": "Phase 2: Smart Contracts",
+      "started_at": "2026-05-07T18:00:00Z",
+      "completed_at": "2026-05-07T20:00:00Z",
+      "evidence": "contracts/PrivLendPool.sol compiled (2 Solidity files, 28 typings); 8/8 tests passing (174ms); DEV-007/008/009 logged; DEV-001-CORRECTION logged (scalar mul confirmed)"
+    },
+    {
+      "phase": "Phase 3: Deploy to Sepolia",
+      "started_at": "2026-05-07T20:00:00Z",
+      "completed_at": "2026-05-07T22:00:00Z",
+      "evidence": "PrivLendPool deployed to 0xbC411fc4D05c76fbf607a49E0b454e16342406Cb block 10806284 tx 0x6f370735c2...; Sourcify verified at repo.sourcify.dev; 3 on-chain lend txs (0.18 ETH total); submission/proof.md written"
+    },
+    {
+      "phase": "Phase 4: Frontend",
+      "started_at": "2026-05-07T22:00:00Z",
+      "completed_at": "2026-05-08T05:35:00Z",
+      "evidence": "All frontend files written: lib/{contract,utils,fhevm}.ts + hooks/{useFHEVM,usePoolStats,usePosition}.ts + 9 components + app/{globals.css,layout.tsx,page.tsx}; tsc --noEmit: 0 errors; next build --webpack: exit 0 (Compiled with warnings in 6.2s, 4/4 static pages); DEV-011 through DEV-016 logged"
     }
   ],
   "expected_phases": [

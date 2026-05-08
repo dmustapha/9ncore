@@ -1,0 +1,26 @@
+{
+  "project": "privlend",
+  "pipeline": {
+    "phases": {
+      "build": {
+        "status": "in-progress",
+        "currentPhase": "phase-5",
+        "completedPhases": ["phase-1", "phase-2", "phase-3", "phase-4"]
+      }
+    }
+  },
+  "buildState": {
+    "status": "in-progress",
+    "contractAddresses": {
+      "PrivLendPool": "0xbC411fc4D05c76fbf607a49E0b454e16342406Cb"
+    },
+    "deviationCount": 16,
+    "knownRiskCount": 9
+  },
+  "artifacts": {
+    "build": {
+      "report_path": "/Users/MAC/hackathon-toolkit/active/zama-mainnet-s2/privlend/BUILD-REPORT.md",
+      "state_path": "/Users/MAC/hackathon-toolkit/active/zama-mainnet-s2/privlend/.build-state.json"
+    }
+  }
+}
