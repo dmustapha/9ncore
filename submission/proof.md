@@ -1,4 +1,4 @@
-# PrivLend — On-Chain Proof of Integration
+# 9ncore — On-Chain Proof of Integration
 
 ## Deployed Contract
 

@@ -1,4 +1,4 @@
-# PrivLend: ETH lending pool with FHE-encrypted positions
+# 9ncore: ETH lending pool with FHE-encrypted positions
 
 Borrow and lend ETH without revealing your collateral or debt on-chain. Collateral and debt amounts live as `euint128` ciphertexts — only you can decrypt them via the Zama FHEVM Gateway.
 
@@ -10,9 +10,9 @@ Borrow and lend ETH without revealing your collateral or debt on-chain. Collater
 
 ![Landing page](frontend/docs/images/landing.png)
 
-## What Is PrivLend?
+## What Is 9ncore?
 
-PrivLend is an ETH lending protocol where your collateral and debt balances are stored as FHE ciphertexts on Sepolia. Liquidators only see a health boolean — they never learn how much you deposited or owe. You can decrypt your own position at any time with an EIP-712 signature, with no transaction and no gas cost.
+9ncore is an ETH lending protocol where your collateral and debt balances are stored as FHE ciphertexts on Sepolia. Liquidators only see a health boolean — they never learn how much you deposited or owe. You can decrypt your own position at any time with an EIP-712 signature, with no transaction and no gas cost.
 
 ---
 
@@ -56,7 +56,7 @@ PrivLend is an ETH lending protocol where your collateral and debt balances are 
 
 | Contract | Address | Description |
 |----------|---------|-------------|
-| PrivLendPool | [`0xC51a6...57105`](https://sepolia.etherscan.io/address/0xC51a6BF9a268b951914F2F35e4237CCC76A57105) | Core lending pool with FHE-encrypted collateral and debt |
+| PrivLendPool | [`0xE6c99...2f4D3`](https://sepolia.etherscan.io/address/0xE6c999817fE5Fa88223abeC51EF17B57dEe2f4D3) | Core lending pool with FHE-encrypted collateral and debt |
 
 Key functions:
 
@@ -139,8 +139,8 @@ Next.js Frontend (wagmi + viem)
 ## Running Locally
 
 ```bash
-git clone https://github.com/dmustapha/privlend
-cd privlend/frontend
+git clone https://github.com/dmustapha/9ncore
+cd 9ncore/frontend
 npm install
 cp .env.example .env.local
 # Edit .env.local and add your Alchemy key
@@ -151,7 +151,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 To run contract tests:
 ```bash
-cd privlend
+cd 9ncore
 npm install
 npx hardhat test
 ```
