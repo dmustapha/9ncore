@@ -10,26 +10,26 @@ export function usePoolStats() {
   const { data, isLoading, refetch } = useReadContracts({
     contracts: [
       { ...contract, functionName: "totalETH" },
-      { ...contract, functionName: "lendingPool" },
+      { ...contract, functionName: "availableToLend" },
       { ...contract, functionName: "totalShares" },
       { ...contract, functionName: "utilizationBps" },
     ],
     query: { refetchInterval: 10_000 },
   });
 
-  const [totalETH, lendingPool, totalShares, utilizationBps] = data ?? [];
+  const [totalETH, availableToLend, totalShares, utilizationBps] = data ?? [];
 
   return {
     isLoading,
     refetch,
     totalETH: totalETH?.result as bigint | undefined,
-    lendingPool: lendingPool?.result as bigint | undefined,
+    availableToLend: availableToLend?.result as bigint | undefined,
     totalShares: totalShares?.result as bigint | undefined,
     utilizationBps: utilizationBps?.result as bigint | undefined,
     // Formatted
-    totalETHStr: totalETH?.result ? formatETH(totalETH.result as bigint) : "...",
-    lendingPoolStr: lendingPool?.result ? formatETH(lendingPool.result as bigint) : "...",
-    utilizationStr: utilizationBps?.result
+    totalETHStr: totalETH?.result !== undefined ? formatETH(totalETH.result as bigint) : "...",
+    availableToLendStr: availableToLend?.result !== undefined ? formatETH(availableToLend.result as bigint) : "...",
+    utilizationStr: utilizationBps?.result !== undefined
       ? bpsToPercent(utilizationBps.result as bigint)
       : "...",
   };

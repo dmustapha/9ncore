@@ -1,25 +1,45 @@
 "use client";
 
-import { useAccount, useConnect, useDisconnect, injected } from "wagmi";
+import { useAccount, useConnect, useDisconnect, useSwitchChain, injected } from "wagmi";
+import { sepolia } from "wagmi/chains";
 import { shortenAddress } from "@/lib/utils";
+import { resetFhevmInstance } from "@/lib/fhevm";
 
 export default function ConnectWallet() {
-  const { address, isConnected } = useAccount();
-  const { connect } = useConnect();
+  const { address, isConnected, chainId } = useAccount();
+  const { connect, isPending, error } = useConnect();
   const { disconnect } = useDisconnect();
+  const { switchChain, isPending: isSwitching } = useSwitchChain();
+
+  // useAccount().chainId is the actual wallet chain — not useChainId() which
+  // returns the last configured chain and lies when wallet is on mainnet.
+  const isWrongNetwork = isConnected && chainId !== sepolia.id;
 
   if (isConnected && address) {
     return (
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 bg-green-900/30 border border-green-500/40 rounded-full px-4 py-2">
-          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-          <span className="text-green-300 text-sm font-mono">
-            {shortenAddress(address)}
-          </span>
-        </div>
+        {isWrongNetwork ? (
+          <button
+            onClick={() => switchChain({ chainId: sepolia.id })}
+            disabled={isSwitching}
+            className="flex items-center gap-2 bg-[rgba(239,68,68,0.1)] border border-[rgba(239,68,68,0.4)] rounded-full px-4 py-1.5 hover:bg-[rgba(239,68,68,0.2)] transition-colors disabled:opacity-60 cursor-pointer"
+          >
+            <div className="w-2 h-2 bg-[#EF4444] rounded-full animate-pulse" />
+            <span className="text-[#EF4444] text-xs font-semibold font-mono">
+              {isSwitching ? "Switching..." : "Wrong network — click to switch to Sepolia"}
+            </span>
+          </button>
+        ) : (
+          <div className="flex items-center gap-2 bg-[rgba(45,212,191,0.08)] border border-[rgba(45,212,191,0.30)] rounded-full px-4 py-1.5">
+            <div className="w-2 h-2 bg-teal rounded-full animate-pulse" />
+            <span className="text-teal-soft text-xs font-mono">
+              {shortenAddress(address)}
+            </span>
+          </div>
+        )}
         <button
-          onClick={() => disconnect()}
-          className="text-gray-400 hover:text-white text-sm transition-colors"
+          onClick={() => { resetFhevmInstance(); disconnect(); }}
+          className="text-[#9CA3AF] hover:text-[#E8EAF0] text-xs font-mono transition-colors"
         >
           Disconnect
         </button>
@@ -28,11 +48,17 @@ export default function ConnectWallet() {
   }
 
   return (
-    <button
-      onClick={() => connect({ connector: injected() })}
-      className="bg-fhe-purple hover:bg-purple-700 text-white font-semibold px-6 py-2 rounded-full transition-colors"
-    >
-      Connect Wallet
-    </button>
+    <div className="flex flex-col items-end gap-1">
+      <button
+        onClick={() => connect({ connector: injected() })}
+        disabled={isPending}
+        className="bg-teal hover:bg-teal/90 disabled:opacity-50 text-void font-bold text-sm px-5 py-2 rounded-lg transition-colors"
+      >
+        {isPending ? "Connecting..." : "Connect Wallet"}
+      </button>
+      {error && (
+        <p className="text-[#EF4444] text-xs max-w-xs text-right">{error.message}</p>
+      )}
+    </div>
   );
 }

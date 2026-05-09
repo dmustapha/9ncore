@@ -19,12 +19,15 @@ const config: HardhatUserConfig = {
     hardhat: {},
     sepolia: {
       url: SEPOLIA_RPC,
-      accounts: DEPLOYER_KEY ? [DEPLOYER_KEY] : [],
+      accounts: DEPLOYER_KEY ? [DEPLOYER_KEY, DEPLOYER_KEY] : [],
       chainId: 11155111,
     },
   },
   etherscan: {
     apiKey: ETHERSCAN_KEY,
+  },
+  sourcify: {
+    enabled: true,
   },
   paths: {
     sources: "./contracts",

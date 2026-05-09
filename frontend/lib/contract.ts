@@ -21,6 +21,13 @@ export const PRIVLEND_ABI = [
   },
   {
     type: "function",
+    name: "withdrawCollateral",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "amount", type: "uint256" }],
+    outputs: [],
+  },
+  {
+    type: "function",
     name: "borrow",
     stateMutability: "nonpayable",
     inputs: [
@@ -73,6 +80,27 @@ export const PRIVLEND_ABI = [
   },
   {
     type: "function",
+    name: "collateralETH",
+    stateMutability: "view",
+    inputs: [{ name: "", type: "address" }],
+    outputs: [{ type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "plainDebt",
+    stateMutability: "view",
+    inputs: [{ name: "", type: "address" }],
+    outputs: [{ type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "maxBorrowable",
+    stateMutability: "view",
+    inputs: [{ name: "borrower", type: "address" }],
+    outputs: [{ type: "uint256" }],
+  },
+  {
+    type: "function",
     name: "hasBorrowPosition",
     stateMutability: "view",
     inputs: [{ name: "addr", type: "address" }],
@@ -89,7 +117,18 @@ export const PRIVLEND_ABI = [
   {
     type: "event",
     name: "Deposited",
-    inputs: [{ name: "borrower", type: "address", indexed: true }],
+    inputs: [
+      { name: "borrower", type: "address", indexed: true },
+      { name: "amount", type: "uint256", indexed: false },
+    ],
+  },
+  {
+    type: "event",
+    name: "CollateralWithdrawn",
+    inputs: [
+      { name: "borrower", type: "address", indexed: true },
+      { name: "amount", type: "uint256", indexed: false },
+    ],
   },
   {
     type: "event",
@@ -102,7 +141,10 @@ export const PRIVLEND_ABI = [
   {
     type: "event",
     name: "Repaid",
-    inputs: [{ name: "borrower", type: "address", indexed: true }],
+    inputs: [
+      { name: "borrower", type: "address", indexed: true },
+      { name: "amount", type: "uint256", indexed: false },
+    ],
   },
   {
     type: "event",
@@ -141,7 +183,10 @@ export const PRIVLEND_ABI = [
   },
 ] as const;
 
+if (!process.env.NEXT_PUBLIC_CONTRACT_ADDRESS) {
+  throw new Error("Missing NEXT_PUBLIC_CONTRACT_ADDRESS — check your .env.local");
+}
 export const CONTRACT_ADDRESS =
-  (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`) ?? "0x0";
+  process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`;
 
 export const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? 11155111);

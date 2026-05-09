@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useWriteContract, useAccount } from "wagmi";
-import { parseEther } from "viem";
+import { useAccount, useBalance, useReadContracts } from "wagmi";
+import { parseEther, formatEther } from "viem";
+import { useSepoliaWrite } from "@/hooks/useSepoliaWrite";
 import { PRIVLEND_ABI, CONTRACT_ADDRESS } from "@/lib/contract";
 import { encryptUint128 } from "@/lib/fhevm";
 import FHEProgress from "./FHEProgress";
@@ -12,25 +13,45 @@ export default function DepositPanel() {
   const [amount, setAmount] = useState("");
   const [status, setStatus] = useState<"idle" | "encrypting" | "submitting" | "done">("idle");
   const [error, setError] = useState<string | null>(null);
-  const { writeContractAsync } = useWriteContract();
+  const [txHash, setTxHash] = useState<string | null>(null);
+  const { writeContractAsync } = useSepoliaWrite();
+  const { data: walletBalance } = useBalance({ address, query: { enabled: !!address } });
+
+  const contract = { address: CONTRACT_ADDRESS, abi: PRIVLEND_ABI } as const;
+  const { data: posData, refetch: refetchPos } = useReadContracts({
+    contracts: [
+      { ...contract, functionName: "collateralETH", args: address ? [address] : undefined },
+      { ...contract, functionName: "maxBorrowable", args: address ? [address] : undefined },
+    ],
+    query: { enabled: !!address, refetchInterval: 10_000 },
+  });
+  const collateralWei = posData?.[0]?.result as bigint | undefined;
+  const maxBorrowWei = posData?.[1]?.result as bigint | undefined;
 
   async function handleDeposit() {
     if (!amount || !address) return;
     setError(null);
 
+    const amountWei = parseEther(amount);
+    if (amountWei <= 0n) {
+      setError("Amount must be greater than zero.");
+      return;
+    }
+    if (walletBalance && amountWei > walletBalance.value) {
+      setError(`Insufficient wallet balance (${Number(walletBalance.value / 10n ** 15n) / 1000} ETH available).`);
+      return;
+    }
+
     try {
-      // Step 1: Encrypt the amount
       setStatus("encrypting");
-      const amountWei = parseEther(amount);
       const { handles, inputProof } = await encryptUint128(
         CONTRACT_ADDRESS,
         address,
         amountWei
       );
 
-      // Step 2: Submit transaction
       setStatus("submitting");
-      await writeContractAsync({
+      const hash = await writeContractAsync({
         address: CONTRACT_ADDRESS,
         abi: PRIVLEND_ABI,
         functionName: "deposit",
@@ -38,16 +59,18 @@ export default function DepositPanel() {
         value: amountWei,
       });
 
+      setTxHash(hash);
       setStatus("done");
       setAmount("");
+      refetchPos();
     } catch (e: any) {
-      setError(e.message ?? "Deposit failed");
+      setError((e as any).shortMessage ?? e.message ?? "Deposit failed");
       setStatus("idle");
     }
   }
 
   return (
-    <div className="bg-fhe-dark/60 border border-fhe-purple/20 rounded-2xl p-6">
+    <div className="panel">
       <FHEProgress
         active={status === "encrypting" || status === "submitting"}
         message={
@@ -57,44 +80,78 @@ export default function DepositPanel() {
         }
       />
 
-      <div className="flex items-center gap-2 mb-4">
-        <span className="text-fhe-purple text-2xl">🛡</span>
-        <h3 className="text-white font-bold text-lg">Deposit Collateral</h3>
-        <span className="text-xs bg-fhe-purple/20 text-fhe-purple px-2 py-0.5 rounded-full">
-          Encrypted
-        </span>
+      <div className="flex items-center justify-between mb-1">
+        <div className="panel-label">COLLATERAL</div>
+        <span className="badge-enc">● ENCRYPTED</span>
       </div>
+      <h3 className="text-[#E8EAF0] font-bold text-lg mb-4">Deposit Collateral</h3>
 
-      <p className="text-gray-400 text-sm mb-4">
-        Your collateral amount is encrypted — no one can see your position balance.
-      </p>
-
+      {address && (
+        <div className="flex gap-4 mb-3 text-xs font-mono flex-wrap">
+          {walletBalance && (
+            <span className="text-[#9CA3AF]">
+              Wallet: <span className="text-teal-soft">{Number(walletBalance.value / 10n ** 15n) / 1000} ETH</span>
+            </span>
+          )}
+          {collateralWei !== undefined && (
+            <span className="text-[#9CA3AF]">
+              Deposited: <span className="text-teal-soft">{Number(formatEther(collateralWei)).toFixed(4)} ETH</span>
+            </span>
+          )}
+          {maxBorrowWei !== undefined && (
+            <span className="text-[#9CA3AF]">
+              Max borrow: <span className="text-teal-soft">{Number(formatEther(maxBorrowWei)).toFixed(4)} ETH</span>
+            </span>
+          )}
+        </div>
+      )}
+      <label className="text-[#9CA3AF] text-xs block mb-2">ETH Amount</label>
       <input
         type="number"
-        placeholder="0.2"
+        placeholder="0.00"
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
-        className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 mb-4 focus:outline-none focus:border-fhe-purple"
+        className="field-input mb-4"
       />
 
       <button
         onClick={handleDeposit}
-        disabled={status !== "idle" || !address || !amount}
-        className="w-full bg-fhe-purple hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors"
+        disabled={(status === "encrypting" || status === "submitting") || !address || !amount}
+        className="w-full bg-teal hover:bg-teal/90 text-void font-bold py-3 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
       >
         {status === "idle" && "Deposit (Encrypted)"}
         {status === "encrypting" && "Encrypting..."}
         {status === "submitting" && "Submitting..."}
-        {status === "done" && "Deposited!"}
+        {status === "done" && "Deposit More"}
       </button>
 
-      {status === "done" && (
-        <p className="text-green-400 text-sm mt-3 text-center">
-          Collateral deposited. Encrypted on-chain.
-        </p>
+      <div className="mt-3 flex items-start gap-2 bg-[rgba(45,212,191,0.04)] rounded-md p-3 border border-[rgba(45,212,191,0.12)]">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="mt-0.5 shrink-0">
+          <path d="M7 1a6 6 0 1 0 0 12A6 6 0 0 0 7 1Zm0 9V7m0-2h.01" stroke="#5EEAD4" strokeWidth="1.3" strokeLinecap="round"/>
+        </svg>
+        <span className="text-[#9CA3AF] text-xs leading-relaxed">
+          Amount is FHE-encrypted client-side before the transaction is broadcast. On-chain state stores only the ciphertext — never the plaintext value.
+        </span>
+      </div>
+
+      {txHash && (
+        <div className="mt-3 flex items-center gap-2">
+          <svg width="12" height="12" viewBox="0 0 12 12">
+            <path d="M10 3L5 8.5 2 5.5" stroke="#4ADE80" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span className="text-[#4ADE80] text-xs font-mono">Deposited —{" "}</span>
+          <a
+            href={`https://sepolia.etherscan.io/tx/${txHash}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-teal-soft text-xs font-mono underline hover:text-teal transition-colors"
+          >
+            {txHash.slice(0, 10)}...{txHash.slice(-6)}
+          </a>
+        </div>
       )}
       {error && (
-        <p className="text-red-400 text-sm mt-3 break-words">{error}</p>
+        <p className="text-[#EF4444] text-sm mt-3 break-words">{error}</p>
       )}
     </div>
   );

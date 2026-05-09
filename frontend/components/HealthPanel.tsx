@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useWriteContract, useAccount } from "wagmi";
+import { useAccount } from "wagmi";
 import { PRIVLEND_ABI, CONTRACT_ADDRESS } from "@/lib/contract";
+import { useSepoliaWrite } from "@/hooks/useSepoliaWrite";
 import FHEProgress from "./FHEProgress";
 
 export default function HealthPanel() {
@@ -10,7 +11,8 @@ export default function HealthPanel() {
   const [targetAddress, setTargetAddress] = useState("");
   const [status, setStatus] = useState<"idle" | "checking" | "done" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
-  const { writeContractAsync } = useWriteContract();
+  const [txHash, setTxHash] = useState<string | null>(null);
+  const { writeContractAsync } = useSepoliaWrite();
 
   async function handleCheckHealth() {
     const target = targetAddress || address;
@@ -19,17 +21,13 @@ export default function HealthPanel() {
 
     try {
       setStatus("checking");
-
-      // Trigger FHE health check computation on-chain
-      // This will: compute ebool (for caller) + euint128 numerator (for borrower)
-      // and emit HealthChecked event
-      await writeContractAsync({
+      const hash = await writeContractAsync({
         address: CONTRACT_ADDRESS,
         abi: PRIVLEND_ABI,
         functionName: "checkHealth",
         args: [target as `0x${string}`],
       });
-
+      setTxHash(hash);
       setStatus("done");
     } catch (e: any) {
       setError(e.message ?? "Health check failed");
@@ -38,56 +36,59 @@ export default function HealthPanel() {
   }
 
   return (
-    <div className="bg-fhe-dark/60 border border-orange-500/20 rounded-2xl p-6">
+    <div className="panel">
       <FHEProgress
         active={status === "checking"}
         message="Computing encrypted health ratio via FHE.ge..."
       />
 
-      <div className="flex items-center gap-2 mb-4">
-        <span className="text-orange-400 text-2xl">🏥</span>
-        <h3 className="text-white font-bold text-lg">Health Check</h3>
-      </div>
+      <div className="panel-label">RISK MONITORING</div>
+      <h3 className="text-[#E8EAF0] font-bold text-lg mb-4">Health Check</h3>
 
-      <p className="text-gray-400 text-sm mb-4">
-        Liquidators: check if a position is healthy (ebool — boolean result only).
-        Borrowers: your health numerator is stored encrypted for your eyes only.
-      </p>
-
+      <label className="text-[#9CA3AF] text-xs block mb-2">Address (leave blank for self)</label>
       <input
         type="text"
-        placeholder="Borrower address (or leave blank for self)"
+        placeholder="0x... or leave blank"
         value={targetAddress}
         onChange={(e) => setTargetAddress(e.target.value)}
-        className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 mb-4 focus:outline-none focus:border-orange-500 font-mono text-sm"
+        className="field-input mb-4 font-mono text-sm"
       />
 
       <button
         onClick={handleCheckHealth}
         disabled={status === "checking" || !address}
-        className="w-full bg-orange-600 hover:bg-orange-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors"
+        className="w-full bg-teal hover:bg-teal/90 text-void font-bold py-3 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
       >
         {status === "checking" ? "Computing FHE Health..." : "Check Health"}
       </button>
 
+      {status === "done" && txHash && (
+        <div className="mt-3 flex items-center gap-2 mb-2">
+          <svg width="12" height="12" viewBox="0 0 12 12">
+            <path d="M10 3L5 8.5 2 5.5" stroke="#4ADE80" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span className="text-[#4ADE80] text-xs font-mono">Computed —{" "}</span>
+          <a href={`https://sepolia.etherscan.io/tx/${txHash}`} target="_blank" rel="noopener noreferrer"
+            className="text-teal-soft text-xs font-mono underline hover:text-teal transition-colors">
+            {txHash.slice(0, 10)}...{txHash.slice(-6)}
+          </a>
+        </div>
+      )}
       {status === "done" && (
-        <div className="mt-4 p-4 bg-white/5 rounded-lg">
-          <p className="text-green-400 text-sm font-medium">
+        <div className="mt-1 p-4 bg-[rgba(45,212,191,0.05)] rounded-lg border border-[rgba(45,212,191,0.12)]">
+          <p className="text-[#4ADE80] text-sm font-semibold font-mono">
             Health check computed on-chain.
           </p>
-          <p className="text-gray-400 text-xs mt-1">
-            If you are the liquidator: use your wallet to call userDecrypt on the
-            health flag handle (returned from the HealthChecked event) to see
-            true/false.
+          <p className="text-[#9CA3AF] text-xs mt-2 leading-relaxed">
+            Liquidator: use your wallet to call userDecrypt on the health flag handle (from HealthChecked event) to see true/false.
           </p>
-          <p className="text-gray-400 text-xs mt-1">
-            If you are the borrower: call userDecrypt on the healthNumerator handle
-            to get collateral×100, then divide by your decrypted debt for the ratio.
+          <p className="text-[#9CA3AF] text-xs mt-1 leading-relaxed">
+            Borrower: call userDecrypt on the healthNumerator handle to get collateral×100, then divide by your decrypted debt.
           </p>
         </div>
       )}
 
-      {error && <p className="text-red-400 text-sm mt-3 break-words">{error}</p>}
+      {error && <p className="text-[#EF4444] text-sm mt-3 break-words">{error}</p>}
     </div>
   );
 }

@@ -3,9 +3,15 @@ cache/
 artifacts/
 typechain-types/
 .env
+.env.local
+.env*.local
 fhevmTemp/
 frontend/node_modules/
 frontend/.next/
 frontend/out/
 *.log
 dist/
+.DS_Store
+.vercel
+.deploy-state.json
+pipeline-log.md
