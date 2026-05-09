@@ -33,10 +33,13 @@ async function main() {
     : envContent + `\nPRIVLEND_POOL_ADDRESS=${address}`;
   fs.writeFileSync(envPath, updatedEnv);
 
-  // Also save to frontend
+  // Also save to frontend — patch only the contract address, preserve other vars
   const feEnvPath = "frontend/.env.local";
-  const feEnvContent = `NEXT_PUBLIC_CONTRACT_ADDRESS=${address}\nNEXT_PUBLIC_CHAIN_ID=11155111\n`;
-  fs.writeFileSync(feEnvPath, feEnvContent);
+  const feEnvContent = fs.existsSync(feEnvPath) ? fs.readFileSync(feEnvPath, "utf-8") : "";
+  const updatedFeEnv = feEnvContent.includes("NEXT_PUBLIC_CONTRACT_ADDRESS=")
+    ? feEnvContent.replace(/NEXT_PUBLIC_CONTRACT_ADDRESS=.*/, `NEXT_PUBLIC_CONTRACT_ADDRESS=${address}`)
+    : `NEXT_PUBLIC_CONTRACT_ADDRESS=${address}\n` + feEnvContent;
+  fs.writeFileSync(feEnvPath, updatedFeEnv);
 
   console.log("\nContract address saved to .env and frontend/.env.local");
   console.log("Next: fund the pool at https://sepoliafaucet.com/");

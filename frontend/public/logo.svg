@@ -1,0 +1,19 @@
+<svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="200" height="200" rx="36" fill="#0C0C14"/>
+  <!-- Outer teal border -->
+  <rect x="2" y="2" width="196" height="196" rx="34" stroke="#2DD4BF" stroke-width="2" stroke-opacity="0.35"/>
+
+  <!-- Lock body (bottom) -->
+  <rect x="68" y="112" width="64" height="52" rx="8" fill="#141420" stroke="#2DD4BF" stroke-width="2.5" stroke-opacity="0.8"/>
+  <!-- Lock shackle (top arc) -->
+  <path d="M82 112 L82 90 Q82 68 100 68 Q118 68 118 90 L118 112" stroke="#2DD4BF" stroke-width="5" stroke-linecap="round" fill="none" stroke-opacity="0.9"/>
+  <!-- Keyhole circle -->
+  <circle cx="100" cy="136" r="7" fill="#2DD4BF" opacity="0.9"/>
+  <!-- Keyhole stem -->
+  <rect x="97" y="140" width="6" height="12" rx="3" fill="#2DD4BF" opacity="0.9"/>
+
+  <!-- "9n" wordmark small below icon area — actually let's use the number -->
+  <!-- Scan line accent across bottom of lock -->
+  <line x1="75" y1="163" x2="125" y2="163" stroke="#2DD4BF" stroke-width="1" stroke-opacity="0.3" stroke-dasharray="4 3"/>
+</svg>

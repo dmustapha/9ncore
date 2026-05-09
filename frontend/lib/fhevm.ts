@@ -19,13 +19,15 @@ export async function getFhevmInstance(): Promise<FhevmInstanceType> {
   if (_initPromise) return _initPromise;
 
   _initPromise = (async () => {
-    const { createInstance, SepoliaConfig } = await import(
+    const { createInstance, SepoliaConfig, initSDK } = await import(
       // @ts-ignore — dynamic import prevents Turbopack static analysis of WASM module
       "@zama-fhe/relayer-sdk/web"
     );
+    // initSDK must be called before createInstance — bootstraps the WASM binary (__wbindgen_malloc)
+    await initSDK();
     const inst = await createInstance({
       ...SepoliaConfig,
-      network: process.env.NEXT_PUBLIC_RPC_URL ?? "https://ethereum-sepolia-rpc.publicnode.com",
+      network: process.env.NEXT_PUBLIC_RPC_URL ?? "",
     });
     _instance = inst;
     return inst;

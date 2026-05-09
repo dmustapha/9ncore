@@ -1,26 +1,193 @@
 @import "tailwindcss";
 
-/* DEV-012: Tailwind v4 uses @theme {} for custom colors, not tailwind.config.ts */
 @theme {
-  --color-fhe-purple: #7c3aed;
-  --color-fhe-dark: #1a0a2e;
-  --color-brand-500: #0ea5e9;
-  --color-brand-600: #0284c7;
+  --color-teal: #2DD4BF;
+  --color-teal-dim: #134E4A;
+  --color-teal-soft: #5EEAD4;
+  --color-void: #07070D;
+  --color-surface: #141420;
+  --color-surface-2: #1a1a2a;
+  /* backward compat aliases for existing components */
+  --color-fhe-purple: #2DD4BF;
+  --color-fhe-dark: #141420;
+  --color-brand-500: #2DD4BF;
+  --color-brand-600: #1aB8A8;
+}
+
+@keyframes blurReveal {
+  from { filter: blur(8px); opacity: 0.5; }
+  to   { filter: blur(0);   opacity: 1; }
+}
+@keyframes tealPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(45,212,191,0.4); }
+  50%       { box-shadow: 0 0 0 8px rgba(45,212,191,0); }
+}
+@keyframes scanLine {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(200%); }
+}
+@keyframes dotPulse {
+  0%, 100% { opacity: 0.03; }
+  50%       { opacity: 0.07; }
+}
+@keyframes tealBreathe {
+  0%, 100% { box-shadow: 0 0 6px rgba(45,212,191,0.2); }
+  50%       { box-shadow: 0 0 16px rgba(45,212,191,0.5); }
+}
+@keyframes encPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
 }
 
 :root {
-  --background: #0f0f1a;
-  --foreground: #f0f0ff;
+  --background: #07070D;
+  --foreground: #E8EAF0;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-inter, Inter, sans-serif);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-space, "Space Grotesk", sans-serif);
+}
+
+.font-mono, code, .mono-val {
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+}
+
+/* Blur-reveal for position values */
+.val-locked {
+  filter: blur(7px);
+  transition: filter 0.5s ease, color 0.5s ease;
+  user-select: none;
+  color: #4B5563;
+}
+.val-locked.revealed {
+  filter: blur(0);
+  color: #2DD4BF;
+  animation: blurReveal 0.5s ease forwards;
+}
+
+/* Panel base */
+.panel {
+  background: #141420;
+  border: 1px solid rgba(45,212,191,0.12);
+  border-radius: 12px;
+  padding: 24px;
+  transition: border-color 0.25s ease;
+}
+.panel:hover {
+  border-color: rgba(45,212,191,0.25);
+}
+
+.panel-label {
+  font-size: 0.65rem;
+  font-family: var(--font-mono, monospace);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #4B5563;
+  margin-bottom: 4px;
+}
+
+/* Encrypted badge */
+.badge-enc {
+  background: #0F2622;
+  border: 1px solid #134E4A;
+  color: #5EEAD4;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  padding: 3px 10px;
+  border-radius: 99px;
+  animation: tealPulse 2.5s ease-in-out infinite;
+}
+
+/* Scan-line hero overlay */
+.scan-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.scan-overlay::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(transparent, rgba(45,212,191,0.08), transparent);
+  animation: scanLine 6s linear infinite;
+}
+
+/* Hero dot grid */
+.hero-dot-grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(45,212,191,0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+  animation: dotPulse 4s ease-in-out infinite;
+  pointer-events: none;
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #7c3aed, #0ea5e9);
+  background: linear-gradient(135deg, #2DD4BF, #67E8F9);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
+
+/* Field inputs */
+.field-input {
+  width: 100%;
+  background: rgba(45,212,191,0.04);
+  border: 1px solid rgba(45,212,191,0.30);
+  border-radius: 6px;
+  padding: 10px 14px;
+  color: #E8EAF0;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.field-input:focus {
+  border-color: #2DD4BF;
+  box-shadow: 0 0 0 3px rgba(45,212,191,0.1);
+}
+.field-input::placeholder {
+  color: #4B5563;
+}
+
+/* Health indicator */
+.health-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.health-healthy {
+  background: #2DD4BF;
+  animation: tealBreathe 2s ease-in-out infinite;
+}
+.health-risk {
+  background: #F87171;
+}
+
+/* Role cards */
+.role-card {
+  background: rgba(45,212,191,0.03);
+  border: 1px solid rgba(45,212,191,0.12);
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 8px;
+}
+.role-card:last-child {
+  margin-bottom: 0;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: #07070D; }
+::-webkit-scrollbar-thumb { background: #134E4A; border-radius: 4px; }

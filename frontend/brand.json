@@ -1,0 +1,26 @@
+{
+  "colors": {
+    "primary": "#0A0A0F",
+    "secondary": "#12121A",
+    "accent": "#2DD4BF",
+    "accentDim": "#134E4A",
+    "danger": "#EF4444",
+    "warning": "#F59E0B",
+    "surface": "#141420",
+    "surfacePlus1": "#1C1C2A",
+    "text": "#E8EAF0",
+    "textMuted": "#6B7280",
+    "textMono": "#5EEAD4",
+    "background": "#07070D"
+  },
+  "fonts": {
+    "heading": "Space Grotesk",
+    "body": "Inter",
+    "mono": "JetBrains Mono"
+  },
+  "logoPath": "public/logo.svg",
+  "darkMode": true,
+  "borderRadius": "2px",
+  "designLanguage": "classified-terminal",
+  "dials": { "DV": 5, "MI": 4, "VD": 6 }
+}

@@ -9,9 +9,7 @@ const wagmiConfig = createConfig({
   chains: [sepolia],
   connectors: [injected()],
   transports: {
-    [sepolia.id]: http(
-      process.env.NEXT_PUBLIC_RPC_URL ?? "https://ethereum-sepolia-rpc.publicnode.com"
-    ),
+    [sepolia.id]: http(process.env.NEXT_PUBLIC_RPC_URL),
   },
 });
 
