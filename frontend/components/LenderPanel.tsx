@@ -42,7 +42,7 @@ export default function LenderPanel() {
       ? (lenderShares * poolAvailable) / totalShares
       : 0n;
 
-  const amountUnits = amount ? parseUnits(amount, 6) : 0n;
+  const amountUnits = (() => { try { return amount ? parseUnits(amount, 6) : 0n; } catch { return 0n; } })();
   const needsApproval = mode === "lend" && usdcAllowance !== undefined && amountUnits > usdcAllowance;
 
   async function handleFaucet() {
@@ -118,6 +118,11 @@ export default function LenderPanel() {
       // shares = usdcAmount * totalShares / poolAvailable
       // This is correct even after interest accrues (shares worth > 1 USDC each).
       const amountUnits = parseUnits(amount, 6);
+      if (amountUnits > lenderUsdc) {
+        setTxError(`Exceeds your deposited balance (${fmtUsdc(lenderUsdc)} available).`);
+        setIsLoading(false);
+        return;
+      }
       const shareAmt =
         totalShares && poolAvailable && poolAvailable > 0n
           ? (amountUnits * totalShares) / poolAvailable

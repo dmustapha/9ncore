@@ -29,7 +29,13 @@ export default function WithdrawCollateralPanel() {
   async function handleWithdraw() {
     if (!amount || !address) return;
     setError(null);
-    const amountWei = parseEther(amount);
+    let amountWei: bigint;
+    try {
+      amountWei = parseEther(amount);
+    } catch {
+      setError("Invalid amount. Enter a valid ETH value.");
+      return;
+    }
     if (collateralWei !== undefined && amountWei > collateralWei) {
       setError(`Exceeds deposited collateral (${Number(formatEther(collateralWei)).toFixed(4)} ETH available).`);
       return;

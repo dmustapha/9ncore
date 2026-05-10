@@ -44,7 +44,7 @@ export default function RepayPanel({ suggestedAmountUnits }: Props) {
   const usdcBalance     = repayData?.[1]?.result as bigint | undefined;
   const usdcAllowance   = repayData?.[2]?.result as bigint | undefined;
 
-  const amountUnits = amount ? parseUnits(amount, 6) : 0n;
+  const amountUnits = (() => { try { return amount ? parseUnits(amount, 6) : 0n; } catch { return 0n; } })();
   const needsApproval = usdcAllowance !== undefined && amountUnits > usdcAllowance;
 
   const fmtUsdc = (units: bigint) => "$" + (Number(units) / 1e6).toFixed(2);
@@ -126,21 +126,16 @@ export default function RepayPanel({ suggestedAmountUnits }: Props) {
 
       {plainDebtUnits !== undefined && (
         <div className="flex items-center justify-between mb-3">
-          <span className="text-[#9CA3AF] text-xs">Outstanding debt (principal)</span>
-          <div className="flex items-center gap-2">
-            <span className="text-[#EF4444] text-xs font-mono font-semibold">
-              {fmtUsdc(plainDebtUnits)}
-            </span>
-            {plainDebtUnits > 0n && (
-              <button
-                onClick={() => setAmount(formatUnits(plainDebtUnits, 6))}
-                className="text-teal text-xs underline hover:no-underline"
-              >
-                Use
-              </button>
-            )}
-          </div>
+          <span className="text-[#9CA3AF] text-xs">Outstanding principal</span>
+          <span className="text-[#EF4444] text-xs font-mono font-semibold">
+            {fmtUsdc(plainDebtUnits)}
+          </span>
         </div>
+      )}
+      {plainDebtUnits !== undefined && plainDebtUnits > 0n && !suggestedAmountUnits && (
+        <p className="text-[#4B5563] text-xs mb-3 leading-relaxed">
+          Decrypt your position above to pre-fill the exact amount including accrued interest.
+        </p>
       )}
 
       {usdcBalance !== undefined && (

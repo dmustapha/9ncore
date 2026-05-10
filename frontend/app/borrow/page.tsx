@@ -58,7 +58,7 @@ export default function BorrowPage() {
                 {[
                   { icon: "↑", text: "Collateral must stay at 150% of your USDC debt at all times." },
                   { icon: "⚡", text: "Max LTV is 66.67%. Borrow up to 2/3 of your collateral value." },
-                  { icon: "↺", text: "Interest accrues at 5% APR per block. Repay early to save." },
+                  { icon: "↺", text: "5% APR, computed per block. Repay early to minimize interest." },
                   { icon: "✓", text: "Repay full debt before withdrawing collateral." },
                   { icon: "🔒", text: "Your balance is never revealed on-chain. Only you can decrypt." },
                   { icon: "$", text: "ETH price is fixed at $2,000 for this testnet deployment." },

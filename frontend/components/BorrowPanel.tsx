@@ -35,7 +35,13 @@ export default function BorrowPanel() {
     if (!amount || !address) return;
     setError(null);
 
-    const amountUnits = parseUnits(amount, 6); // USDC 6 decimals
+    let amountUnits: bigint;
+    try {
+      amountUnits = parseUnits(amount, 6); // USDC 6 decimals
+    } catch {
+      setError("Invalid amount. Enter a valid number with up to 6 decimal places.");
+      return;
+    }
     if (amountUnits <= 0n) {
       setError("Amount must be greater than zero.");
       return;
