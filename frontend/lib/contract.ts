@@ -231,12 +231,12 @@ if (!process.env.NEXT_PUBLIC_CONTRACT_ADDRESS) {
   throw new Error("Missing NEXT_PUBLIC_CONTRACT_ADDRESS — check your .env.local");
 }
 export const CONTRACT_ADDRESS =
-  process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`;
+  process.env.NEXT_PUBLIC_CONTRACT_ADDRESS!.trim() as `0x${string}`;
 
 if (!process.env.NEXT_PUBLIC_USDC_ADDRESS) {
   throw new Error("Missing NEXT_PUBLIC_USDC_ADDRESS — check your .env.local");
 }
 export const USDC_ADDRESS =
-  process.env.NEXT_PUBLIC_USDC_ADDRESS as `0x${string}`;
+  process.env.NEXT_PUBLIC_USDC_ADDRESS.trim() as `0x${string}`;
 
 export const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? 11155111);
