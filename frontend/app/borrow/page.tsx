@@ -18,7 +18,7 @@ export default function BorrowPage() {
           <div className="panel-label mb-1">BORROWER DASHBOARD</div>
           <h1 className="text-[#E8EAF0] font-bold text-2xl">Borrow ETH</h1>
           <p className="text-[#9CA3AF] text-sm mt-1">
-            Deposit collateral, borrow ETH, monitor health, and repay — all with encrypted balances.
+            Deposit collateral, borrow ETH, monitor health, and repay. All balances stay encrypted.
           </p>
         </div>
 
@@ -55,10 +55,10 @@ export default function BorrowPage() {
               <div className="flex flex-col gap-3">
                 {[
                   { icon: "↑", text: "Collateral must stay ≥ 150% of your debt at all times" },
-                  { icon: "⚡", text: "Max LTV is 66.67% — you can borrow up to 2/3 of your collateral value" },
-                  { icon: "↺", text: "Interest accrues at 5% APR per block — repay early to save" },
-                  { icon: "✓", text: "Repay full debt before withdrawing collateral" },
-                  { icon: "🔒", text: "Your balance is never revealed on-chain — only you can decrypt" },
+                  { icon: "⚡", text: "Max LTV is 66.67%. Borrow up to 2/3 of your collateral value." },
+                  { icon: "↺", text: "Interest accrues at 5% APR per block. Repay early to save." },
+                  { icon: "✓", text: "Repay full debt before withdrawing collateral." },
+                  { icon: "🔒", text: "Your balance is never revealed on-chain. Only you can decrypt." },
                 ].map((r, i) => (
                   <div key={i} className="flex gap-2 items-start">
                     <span className="text-teal text-xs mt-0.5 shrink-0 font-mono">{r.icon}</span>

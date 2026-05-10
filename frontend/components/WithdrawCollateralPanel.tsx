@@ -109,7 +109,7 @@ export default function WithdrawCollateralPanel() {
       >
         {status === "idle" && "Withdraw Collateral"}
         {status === "submitting" && "Submitting..."}
-        {status === "done" && "Withdrawn!"}
+        {status === "done" && "Withdrawn"}
       </button>
 
       {txHash && (
@@ -117,7 +117,7 @@ export default function WithdrawCollateralPanel() {
           <svg width="12" height="12" viewBox="0 0 12 12">
             <path d="M10 3L5 8.5 2 5.5" stroke="#4ADE80" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          <span className="text-[#4ADE80] text-xs font-mono">Withdrawn —{" "}</span>
+          <span className="text-[#4ADE80] text-xs font-mono">Withdrawn:</span>
           <a href={`https://sepolia.etherscan.io/tx/${txHash}`} target="_blank" rel="noopener noreferrer"
             className="text-teal-soft text-xs font-mono underline hover:text-teal transition-colors">
             {txHash.slice(0, 10)}...{txHash.slice(-6)}

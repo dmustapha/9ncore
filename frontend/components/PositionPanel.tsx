@@ -124,7 +124,7 @@ export default function PositionPanel() {
           </button>
 
           <p className="text-[#4B5563] text-xs mt-2 text-center font-mono">
-            Requires EIP-712 signature — no tx, no gas
+            Requires EIP-712 signature. No tx, no gas.
           </p>
 
           {showConfirm && (
@@ -132,7 +132,7 @@ export default function PositionPanel() {
               <svg width="12" height="12" viewBox="0 0 12 12">
                 <path d="M10 3L5 8.5 2 5.5" stroke="#2DD4BF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              <span className="text-teal-soft text-xs font-mono">FHE.allow — decrypt access granted</span>
+              <span className="text-teal-soft text-xs font-mono">FHE.allow: decrypt access granted</span>
             </div>
           )}
         </>

@@ -130,7 +130,7 @@ export default function DepositPanel() {
           <path d="M7 1a6 6 0 1 0 0 12A6 6 0 0 0 7 1Zm0 9V7m0-2h.01" stroke="#5EEAD4" strokeWidth="1.3" strokeLinecap="round"/>
         </svg>
         <span className="text-[#9CA3AF] text-xs leading-relaxed">
-          Amount is FHE-encrypted client-side before the transaction is broadcast. On-chain state stores only the ciphertext — never the plaintext value.
+          Amount is FHE-encrypted client-side before the transaction is broadcast. On-chain state stores only the ciphertext, never the plaintext value.
         </span>
       </div>
 
@@ -139,7 +139,7 @@ export default function DepositPanel() {
           <svg width="12" height="12" viewBox="0 0 12 12">
             <path d="M10 3L5 8.5 2 5.5" stroke="#4ADE80" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          <span className="text-[#4ADE80] text-xs font-mono">Deposited —{" "}</span>
+          <span className="text-[#4ADE80] text-xs font-mono">Deposited:</span>
           <a
             href={`https://sepolia.etherscan.io/tx/${txHash}`}
             target="_blank"
