@@ -114,10 +114,14 @@ export default function LenderPanel() {
     setTxHash(null);
     setTxError(null);
     try {
+      // Convert the USDC amount the user typed into the equivalent share count.
+      // shares = usdcAmount * totalShares / poolAvailable
+      // This is correct even after interest accrues (shares worth > 1 USDC each).
+      const amountUnits = parseUnits(amount, 6);
       const shareAmt =
-        amount === formatUnits(lenderShares ?? 0n, 6)
-          ? (lenderShares ?? parseUnits(amount, 6))
-          : parseUnits(amount, 6);
+        totalShares && poolAvailable && poolAvailable > 0n
+          ? (amountUnits * totalShares) / poolAvailable
+          : amountUnits; // fallback 1:1 when pool is empty (shouldn't happen)
       const hash = await writeContractAsync({
         address: CONTRACT_ADDRESS,
         abi: PRIVLEND_ABI,
