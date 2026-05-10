@@ -6,8 +6,8 @@ const FHE_OPS = [
   { op: "FHE.fromExternal", desc: "Validate encrypted inputs using zero-knowledge proof of knowledge (ZKPoK) before accepting ciphertext" },
   { op: "FHE.add", desc: "Accumulate collateral and debt balances homomorphically over encrypted ciphertexts" },
   { op: "FHE.sub", desc: "Reduce encrypted debt balance on repay: subtraction in ciphertext space, no plaintext exposed." },
-  { op: "FHE.mul ×100", desc: "Compute health ratio numerator: multiply encrypted collateral by 100 for fixed-point precision." },
-  { op: "FHE.mul ×150", desc: "Compute health ratio denominator: multiply encrypted debt by 150 (minimum collateral ratio)." },
+  { op: "FHE.mul ×4000", desc: "Scale encrypted ETH collateral to USDC value (ETH price $2,000) for cross-unit health check." },
+  { op: "FHE.mul ×3T", desc: "Scale encrypted USDC debt by 3,000,000,000,000 to match collateral unit precision for the 150% ratio check." },
   { op: "FHE.ge", desc: "Compute the health boolean for liquidators: encrypted comparison produces a single bit." },
   { op: "FHE.min", desc: "Cap partial liquidation amount to the outstanding balance, preventing over-liquidation." },
   { op: "FHE.div", desc: "Interest rate calculation over encrypted principal: division performed homomorphically." },
@@ -50,7 +50,7 @@ export default function Home() {
           </div>
 
           <h1 className="text-5xl md:text-6xl font-bold text-[#E8EAF0] leading-tight mb-4">
-            Lend and Borrow ETH
+            Lend USDC, Borrow Against ETH
             <br />
             <span className="gradient-text">Without Leaking Positions</span>
           </h1>
@@ -73,7 +73,7 @@ export default function Home() {
           <div className="panel-label mb-2">FOR LENDERS</div>
           <h2 className="text-[#E8EAF0] font-bold text-xl mb-3">Provide Liquidity</h2>
           <p className="text-[#9CA3AF] text-sm leading-relaxed mb-6 flex-1">
-            Deposit ETH into the lending pool and earn yield from borrower interest. Your share
+            Deposit USDC into the lending pool and earn yield from borrower interest. Your share
             of the pool is tracked proportionally. Withdraw at any time.
           </p>
           <div className="flex gap-3 mb-6 text-xs font-mono flex-wrap">
@@ -145,7 +145,7 @@ export default function Home() {
               {
                 icon: "O",
                 role: "Observer",
-                desc: "Sees pool totals only: total ETH locked, utilization rate. No visibility into individual balances.",
+                desc: "Sees pool totals only: total USDC deposited, ETH collateral locked, utilization rate. No visibility into individual balances.",
                 color: "rgba(156,163,175,0.1)",
               },
             ].map((r) => (

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useAccount, useBalance, useReadContracts } from "wagmi";
-import { parseEther, formatEther } from "viem";
-import { PRIVLEND_ABI, CONTRACT_ADDRESS } from "@/lib/contract";
+import { useAccount, useReadContracts } from "wagmi";
+import { parseUnits, formatUnits } from "viem";
+import { PRIVLEND_ABI, USDC_ABI, CONTRACT_ADDRESS, USDC_ADDRESS } from "@/lib/contract";
 import { useSepoliaWrite } from "@/hooks/useSepoliaWrite";
 import FHEProgress from "./FHEProgress";
 
@@ -16,25 +16,75 @@ export default function LenderPanel() {
   const [txError, setTxError] = useState<string | null>(null);
   const { writeContractAsync } = useSepoliaWrite();
 
-  const { data: walletBalance } = useBalance({ address, query: { enabled: !!address } });
+  const poolContract = { address: CONTRACT_ADDRESS, abi: PRIVLEND_ABI } as const;
+  const usdcContract = { address: USDC_ADDRESS, abi: USDC_ABI } as const;
 
-  const contract = { address: CONTRACT_ADDRESS, abi: PRIVLEND_ABI } as const;
-  const { data: poolData } = useReadContracts({
+  const { data: poolData, refetch: refetchPool } = useReadContracts({
     contracts: [
-      { ...contract, functionName: "lenderShares", args: address ? [address] : undefined },
-      { ...contract, functionName: "totalShares" },
-      { ...contract, functionName: "totalETH" },
+      { ...poolContract, functionName: "lenderShares", args: address ? [address] : undefined },
+      { ...poolContract, functionName: "totalShares" },
+      { ...poolContract, functionName: "availableToLend" },
+      { ...usdcContract, functionName: "balanceOf", args: address ? [address] : undefined },
+      { ...usdcContract, functionName: "allowance", args: address ? [address, CONTRACT_ADDRESS] : undefined },
     ],
     query: { enabled: !!address, refetchInterval: 10_000 },
   });
 
-  const lenderShares = poolData?.[0]?.result as bigint | undefined;
-  const totalShares = poolData?.[1]?.result as bigint | undefined;
-  const totalETH = poolData?.[2]?.result as bigint | undefined;
-  const lenderETH =
-    lenderShares && totalShares && totalETH && totalShares > 0n
-      ? (lenderShares * totalETH) / totalShares
+  const lenderShares    = poolData?.[0]?.result as bigint | undefined;
+  const totalShares     = poolData?.[1]?.result as bigint | undefined;
+  const poolAvailable   = poolData?.[2]?.result as bigint | undefined;
+  const usdcBalance     = poolData?.[3]?.result as bigint | undefined;
+  const usdcAllowance   = poolData?.[4]?.result as bigint | undefined;
+
+  // Calculate lender's USDC value from shares
+  const lenderUsdc =
+    lenderShares && totalShares && poolAvailable && totalShares > 0n
+      ? (lenderShares * poolAvailable) / totalShares
       : 0n;
+
+  const amountUnits = amount ? parseUnits(amount, 6) : 0n;
+  const needsApproval = mode === "lend" && usdcAllowance !== undefined && amountUnits > usdcAllowance;
+
+  async function handleFaucet() {
+    if (!address) return;
+    setIsLoading(true);
+    setTxHash(null);
+    setTxError(null);
+    try {
+      const hash = await writeContractAsync({
+        address: USDC_ADDRESS,
+        abi: USDC_ABI,
+        functionName: "faucet",
+      });
+      setTxHash(hash);
+      refetchPool();
+    } catch (e: any) {
+      setTxError((e as any).shortMessage ?? e.message ?? "Faucet failed");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleApprove() {
+    if (!amount || !address) return;
+    setIsLoading(true);
+    setTxHash(null);
+    setTxError(null);
+    try {
+      const hash = await writeContractAsync({
+        address: USDC_ADDRESS,
+        abi: USDC_ABI,
+        functionName: "approve",
+        args: [CONTRACT_ADDRESS, amountUnits],
+      });
+      setTxHash(hash);
+      refetchPool();
+    } catch (e: any) {
+      setTxError((e as any).shortMessage ?? e.message ?? "Approval failed");
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   async function handleLend() {
     if (!amount || !address) return;
@@ -46,10 +96,11 @@ export default function LenderPanel() {
         address: CONTRACT_ADDRESS,
         abi: PRIVLEND_ABI,
         functionName: "lend",
-        value: parseEther(amount),
+        args: [amountUnits],
       });
       setTxHash(hash);
       setAmount("");
+      refetchPool();
     } catch (e: any) {
       setTxError((e as any).shortMessage ?? e.message ?? "Transaction failed");
     } finally {
@@ -63,11 +114,10 @@ export default function LenderPanel() {
     setTxHash(null);
     setTxError(null);
     try {
-      // withdrawLiquidity takes share count. Since shares start 1:1 with deposits,
-      // parseEther(amount) works directly. For post-interest withdrawals, use lenderShares directly.
-      const shareAmt = amount === formatEther(lenderShares ?? 0n)
-        ? (lenderShares ?? parseEther(amount))
-        : parseEther(amount);
+      const shareAmt =
+        amount === formatUnits(lenderShares ?? 0n, 6)
+          ? (lenderShares ?? parseUnits(amount, 6))
+          : parseUnits(amount, 6);
       const hash = await writeContractAsync({
         address: CONTRACT_ADDRESS,
         abi: PRIVLEND_ABI,
@@ -76,12 +126,16 @@ export default function LenderPanel() {
       });
       setTxHash(hash);
       setAmount("");
+      refetchPool();
     } catch (e: any) {
       setTxError((e as any).shortMessage ?? e.message ?? "Transaction failed");
     } finally {
       setIsLoading(false);
     }
   }
+
+  const fmtUsdc = (units: bigint) =>
+    "$" + (Number(units) / 1e6).toFixed(2);
 
   return (
     <div className="panel">
@@ -91,27 +145,34 @@ export default function LenderPanel() {
 
       {/* Balance strip */}
       {address && (
-        <div className="flex gap-4 mb-4 text-xs font-mono">
+        <div className="flex gap-4 mb-3 text-xs font-mono flex-wrap items-center">
           <span className="text-[#9CA3AF]">
-            Wallet:{" "}
+            Wallet USDC:{" "}
             <span className="text-teal-soft">
-              {walletBalance ? `${Number(walletBalance.value / 10n ** 15n) / 1000} ETH` : "..."}
+              {usdcBalance !== undefined ? fmtUsdc(usdcBalance) : "..."}
             </span>
           </span>
           <span className="text-[#9CA3AF]">
             Deposited:{" "}
             <span className="text-teal-soft">
-              {lenderShares !== undefined ? `${Number(lenderETH) / 1e18 < 0.0001 && lenderETH === 0n ? "0 ETH" : (Number(lenderETH) / 1e18).toFixed(4) + " ETH"}` : "..."}
+              {lenderShares !== undefined ? fmtUsdc(lenderUsdc) : "..."}
             </span>
             {mode === "withdraw" && lenderShares !== undefined && lenderShares > 0n && (
               <button
-                onClick={() => setAmount(formatEther(lenderETH))}
+                onClick={() => setAmount(formatUnits(lenderUsdc, 6))}
                 className="ml-2 text-teal text-xs underline hover:no-underline"
               >
                 Max
               </button>
             )}
           </span>
+          <button
+            onClick={handleFaucet}
+            disabled={isLoading || !address}
+            className="text-xs font-mono text-teal underline hover:no-underline disabled:opacity-40"
+          >
+            Get 10k USDC
+          </button>
         </div>
       )}
 
@@ -131,7 +192,7 @@ export default function LenderPanel() {
         ))}
       </div>
 
-      <label className="text-[#9CA3AF] text-xs block mb-2">ETH Amount</label>
+      <label className="text-[#9CA3AF] text-xs block mb-2">USDC Amount</label>
       <input
         type="number"
         placeholder="0.00"
@@ -140,13 +201,33 @@ export default function LenderPanel() {
         className="field-input mb-4"
       />
 
-      <button
-        onClick={mode === "lend" ? handleLend : handleWithdraw}
-        disabled={isLoading || !address || !amount}
-        className="w-full bg-teal hover:bg-teal/90 text-void font-bold py-3 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-      >
-        {isLoading ? "Processing..." : mode === "lend" ? "Add Liquidity" : "Withdraw ETH"}
-      </button>
+      {mode === "lend" && needsApproval ? (
+        <button
+          onClick={handleApprove}
+          disabled={isLoading || !address || !amount}
+          className="w-full bg-teal hover:bg-teal/90 text-void font-bold py-3 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed mb-2"
+        >
+          {isLoading ? "Processing..." : "Approve USDC"}
+        </button>
+      ) : (
+        <button
+          onClick={mode === "lend" ? handleLend : handleWithdraw}
+          disabled={isLoading || !address || !amount}
+          className="w-full bg-teal hover:bg-teal/90 text-void font-bold py-3 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {isLoading
+            ? "Processing..."
+            : mode === "lend"
+            ? "Add Liquidity"
+            : "Withdraw USDC"}
+        </button>
+      )}
+
+      {mode === "lend" && needsApproval && (
+        <p className="text-[#9CA3AF] text-xs mt-1 text-center">
+          Step 1 of 2. After approving, click Add Liquidity.
+        </p>
+      )}
 
       {txHash && (
         <div className="mt-3 flex items-center gap-2">

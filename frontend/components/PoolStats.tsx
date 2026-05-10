@@ -3,11 +3,12 @@
 import { usePoolStats } from "@/hooks/usePoolStats";
 
 export default function PoolStats() {
-  const { totalETHStr, availableToLendStr, utilizationStr, isLoading } = usePoolStats();
+  const { totalUSDCStr, availableToLendStr, totalCollateralETHStr, utilizationStr, isLoading } = usePoolStats();
 
   const stats = [
-    { label: "Total Locked", value: totalETHStr },
+    { label: "USDC Pool", value: totalUSDCStr },
     { label: "Available to Borrow", value: availableToLendStr },
+    { label: "ETH Collateral", value: totalCollateralETHStr },
     { label: "Utilization", value: utilizationStr },
     { label: "Privacy", value: "FHEVM Active", teal: true },
   ];
@@ -17,7 +18,7 @@ export default function PoolStats() {
       {stats.map((s) => (
         <div
           key={s.label}
-          className="flex-1 min-w-[140px] bg-surface px-5 py-4 flex flex-col gap-1"
+          className="flex-1 min-w-[130px] bg-surface px-5 py-4 flex flex-col gap-1"
         >
           <span className="panel-label">{s.label}</span>
           <span

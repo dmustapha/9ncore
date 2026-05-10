@@ -5,7 +5,12 @@ import { useAccount, useWalletClient } from "wagmi";
 import { usePosition } from "@/hooks/usePosition";
 import FHEProgress from "./FHEProgress";
 
-export default function PositionPanel() {
+interface Props {
+  /** Called when FHE decryption reveals the debt (USDC units). Used to pre-fill RepayPanel. */
+  onDebtDecrypted?: (debtUnits: bigint) => void;
+}
+
+export default function PositionPanel({ onDebtDecrypted }: Props) {
   const { address } = useAccount();
   const { data: walletClient } = useWalletClient();
 
@@ -16,7 +21,7 @@ export default function PositionPanel() {
     debtStr,
     healthRatioStr,
     collateralWei: rawCollateral,
-    debtWei: rawDebt,
+    debtWei: rawDebt,      // USDC units (6 dec) after migration
     decrypting,
     decryptError,
     decryptPosition,
@@ -31,6 +36,9 @@ export default function PositionPanel() {
     if (collateralStr !== null && !revealed) {
       setRevealed(true);
       setShowConfirm(true);
+      if (rawDebt !== null && rawDebt > 0n && onDebtDecrypted) {
+        onDebtDecrypted(rawDebt);
+      }
       [0, 1, 2, 3].forEach((i) => {
         setTimeout(() => {
           setRevealedRows((prev) => {
@@ -46,18 +54,27 @@ export default function PositionPanel() {
   const hasPosition = hasCollateral || hasDebt;
   const canDecrypt = !!(address && walletClient && hasPosition && !decrypting && !revealed);
 
-  const displayCollateral = collateralStr ?? "0.000 ETH";
-  const displayDebt = debtStr ?? "0.000 ETH";
-  const displayHealth = healthRatioStr ?? "—";
-  const displayNet = rawCollateral !== null && rawDebt !== null
-    ? `${(Number(rawCollateral - (rawDebt ?? 0n)) / 1e18).toFixed(4)} ETH`
-    : "—";
+  const displayCollateral = collateralStr ?? "0.0000 ETH";
+  const displayDebt       = debtStr ?? "$0.00";
+  const displayHealth     = healthRatioStr ?? "—";
+
+  // Net position: collateral value in USDC minus debt
+  const displayNet =
+    rawCollateral !== null && rawDebt !== null
+      ? (() => {
+          const collateralUsdc = (rawCollateral * 2000n) / 1_000_000_000_000n;
+          const net = collateralUsdc - rawDebt;
+          const isNeg = net < 0n;
+          const absNet = isNeg ? -net : net;
+          return `${isNeg ? "-" : "+"}$${(Number(absNet) / 1e6).toFixed(2)}`;
+        })()
+      : "—";
 
   const rows = [
-    { label: "Collateral", value: displayCollateral, index: 0 },
-    { label: "Debt", value: displayDebt, index: 1 },
-    { label: "Health Ratio", value: displayHealth, index: 2 },
-    { label: "Net Position", value: displayNet, index: 3 },
+    { label: "Collateral",     value: displayCollateral, index: 0 },
+    { label: "Debt",           value: displayDebt,       index: 1 },
+    { label: "Health Factor",  value: displayHealth,     index: 2 },
+    { label: "Net Value",      value: displayNet,        index: 3 },
   ];
 
   return (
@@ -81,7 +98,7 @@ export default function PositionPanel() {
       {!address ? (
         <p className="text-[#4B5563] text-sm font-mono">Connect your wallet to view your position.</p>
       ) : !hasPosition ? (
-        <p className="text-[#4B5563] text-sm font-mono">No active position. Deposit collateral to get started.</p>
+        <p className="text-[#4B5563] text-sm font-mono">No active position. Deposit ETH collateral to get started.</p>
       ) : (
         <>
           <div className="flex flex-col gap-0 mb-4">
@@ -100,6 +117,9 @@ export default function PositionPanel() {
             ))}
           </div>
 
+          <p className="text-[#4B5563] text-xs font-mono mb-1 text-center">
+            Collateral in ETH, debt in USDC. Health factor &ge;1.0 = safe.
+          </p>
           <p className="text-[#4B5563] text-xs font-mono mb-3 text-center">
             Values encrypted via FHE. Only you can decrypt.
           </p>
