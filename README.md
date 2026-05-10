@@ -8,6 +8,8 @@ Borrow and lend ETH without revealing your collateral or debt on-chain. Collater
 [![Zama FHEVM](https://img.shields.io/badge/Zama-FHEVM-6B46C1)](https://docs.zama.ai/fhevm)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
+**Live:** https://9ncore.vercel.app
+
 ![Landing page](frontend/docs/images/landing.png)
 
 ## What Is 9ncore?
