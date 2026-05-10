@@ -5,6 +5,7 @@ import { useAccount } from "wagmi";
 import { useReadContracts } from "wagmi";
 import { formatEther } from "viem";
 import { PRIVLEND_ABI, CONTRACT_ADDRESS } from "@/lib/contract";
+import { formatUSDC, formatHealthFactor } from "@/lib/utils";
 import PoolStats from "@/components/PoolStats";
 import PositionPanel from "@/components/PositionPanel";
 
@@ -22,16 +23,18 @@ function PositionSummary({ address }: { address: `0x${string}` }) {
   });
 
   const collateralWei = data?.[0]?.result as bigint | undefined;
-  const debtWei       = data?.[1]?.result as bigint | undefined;
-  const maxBorrow     = data?.[2]?.result as bigint | undefined;
+  const debtUsdc      = data?.[1]?.result as bigint | undefined; // plainDebt returns USDC units (6 dec)
+  const maxBorrow     = data?.[2]?.result as bigint | undefined; // maxBorrowable returns USDC units (6 dec)
   const hasDebt       = data?.[3]?.result as boolean | undefined;
   const hasCollat     = data?.[4]?.result as boolean | undefined;
 
-  // Health: collateral >= 150% of debt
-  const healthRatioPct = collateralWei && debtWei && debtWei > 0n
-    ? Math.round(Number(collateralWei) / Number(debtWei) * 100)
+  // Health factor: collateralValue_usdc / (debt * 1.5), ≥1.0 = safe
+  // Uses formatHealthFactor from utils which handles cross-unit math (ETH wei vs USDC units)
+  const hfStr = collateralWei !== undefined && debtUsdc !== undefined && debtUsdc > 0n
+    ? formatHealthFactor(collateralWei, debtUsdc)
     : null;
-  const isHealthy = healthRatioPct !== null ? healthRatioPct >= 150 : null;
+  const hfNum = hfStr ? parseFloat(hfStr) : null;
+  const isHealthy = hfNum !== null ? hfNum >= 1.0 : null;
 
   const hasPosition = hasCollat || hasDebt;
 
@@ -43,23 +46,23 @@ function PositionSummary({ address }: { address: `0x${string}` }) {
       color: "#2DD4BF",
     },
     {
-      label: "Debt",
-      value: debtWei !== undefined ? `${Number(formatEther(debtWei)).toFixed(4)} ETH` : "...",
-      sub: "Outstanding principal",
-      color: debtWei && debtWei > 0n ? "#EF4444" : "#9CA3AF",
+      label: "Debt (Principal)",
+      value: debtUsdc !== undefined ? formatUSDC(debtUsdc) : "...",
+      sub: "USDC owed (excl. interest)",
+      color: debtUsdc && debtUsdc > 0n ? "#EF4444" : "#9CA3AF",
     },
     {
       label: "Max Borrowable",
-      value: maxBorrow !== undefined ? `${Number(formatEther(maxBorrow)).toFixed(4)} ETH` : "...",
-      sub: "At current LTV headroom",
+      value: maxBorrow !== undefined ? formatUSDC(maxBorrow) : "...",
+      sub: "USDC at current LTV headroom",
       color: "#2DD4BF",
     },
     {
-      label: "Health Status",
+      label: "Health Factor",
       value: isHealthy === null
         ? (hasPosition ? "—" : "No position")
-        : isHealthy ? "HEALTHY" : "AT RISK",
-      sub: healthRatioPct !== null ? `${healthRatioPct}% collateral ratio` : "Deposit collateral to start",
+        : isHealthy ? `${hfStr} ✓` : `${hfStr} ⚠`,
+      sub: hfNum !== null ? `${hfNum >= 1.0 ? "Safe" : "At risk"} · liquidates below 1.0` : "Deposit collateral to start",
       color: isHealthy === null ? "#4B5563" : isHealthy ? "#4ADE80" : "#EF4444",
     },
   ];
@@ -132,7 +135,7 @@ export default function DashboardPage() {
                 >
                   <div>
                     <div className="text-[#E8EAF0] text-sm font-semibold">Add Liquidity</div>
-                    <div className="text-[#4B5563] text-xs mt-0.5">Lend ETH and earn 5% APR</div>
+                    <div className="text-[#4B5563] text-xs mt-0.5">Lend USDC and earn 5% APR</div>
                   </div>
                   <span className="text-teal-soft text-sm group-hover:translate-x-0.5 transition-transform">→</span>
                 </Link>
@@ -151,7 +154,7 @@ export default function DashboardPage() {
                   className="flex items-center justify-between p-3 rounded-lg bg-[rgba(45,212,191,0.05)] border border-[rgba(45,212,191,0.15)] hover:border-[rgba(45,212,191,0.35)] transition-colors group"
                 >
                   <div>
-                    <div className="text-[#E8EAF0] text-sm font-semibold">Borrow ETH</div>
+                    <div className="text-[#E8EAF0] text-sm font-semibold">Borrow USDC</div>
                     <div className="text-[#4B5563] text-xs mt-0.5">Up to 66.67% of your collateral</div>
                   </div>
                   <span className="text-teal-soft text-sm group-hover:translate-x-0.5 transition-transform">→</span>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useReadContracts, usePublicClient } from "wagmi";
 import { keccak256, encodeAbiParameters, parseAbiParameters } from "viem";
 import { PRIVLEND_ABI, CONTRACT_ADDRESS } from "@/lib/contract";
@@ -21,6 +21,13 @@ export function usePosition(walletAddress?: string) {
   const [debtWei, setDebtWei] = useState<bigint | null>(null);
   const [decrypting, setDecrypting] = useState(false);
   const [decryptError, setDecryptError] = useState<string | null>(null);
+
+  // Reset decrypted state when wallet changes so stale values don't persist
+  useEffect(() => {
+    setCollateralWei(null);
+    setDebtWei(null);
+    setDecryptError(null);
+  }, [walletAddress]);
 
   const publicClient = usePublicClient();
   const contract = { address: CONTRACT_ADDRESS, abi: PRIVLEND_ABI } as const;

@@ -33,7 +33,13 @@ export default function DepositPanel() {
     if (!amount || !address) return;
     setError(null);
 
-    const amountWei = parseEther(amount);
+    let amountWei: bigint;
+    try {
+      amountWei = parseEther(amount);
+    } catch {
+      setError("Invalid amount. Enter a valid ETH value.");
+      return;
+    }
     if (amountWei <= 0n) {
       setError("Amount must be greater than zero.");
       return;

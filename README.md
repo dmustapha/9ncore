@@ -1,6 +1,6 @@
-# 9ncore: ETH lending pool with FHE-encrypted positions
+# 9ncore: FHE-encrypted lending pool on Sepolia
 
-Borrow and lend ETH without revealing your collateral or debt on-chain. Collateral and debt amounts live as `euint128` ciphertexts — only you can decrypt them via the Zama FHEVM Gateway.
+Deposit ETH collateral and borrow USDC without revealing your balances on-chain. Collateral and debt amounts live as `euint128` ciphertexts (only you can decrypt them via the Zama FHEVM Gateway).
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
@@ -14,7 +14,7 @@ Borrow and lend ETH without revealing your collateral or debt on-chain. Collater
 
 ## What Is 9ncore?
 
-9ncore is an ETH lending protocol where your collateral and debt balances are stored as FHE ciphertexts on Sepolia. Liquidators only see a health boolean — they never learn how much you deposited or owe. You can decrypt your own position at any time with an EIP-712 signature, with no transaction and no gas cost.
+9ncore is an ETH-collateral, USDC-borrow lending protocol where your collateral and debt balances are stored as FHE ciphertexts on Sepolia. Liquidators only see a health boolean; they never learn how much you deposited or owe. You can decrypt your own position at any time with an EIP-712 signature, with no transaction and no gas cost.
 
 ---
 
@@ -32,11 +32,11 @@ Borrow and lend ETH without revealing your collateral or debt on-chain. Collater
 
 ## Features
 
-- **Encrypted balances**: Collateral and debt stored as `euint128` ciphertexts — no plaintext values on-chain ever
+- **Encrypted balances**: Collateral and debt stored as `euint128` ciphertexts (no plaintext values on-chain ever)
 - **Private borrow**: Interest accrues via FHE arithmetic over ciphertext; the chain never sees your balance
-- **Self-decrypt**: View your position by signing an EIP-712 permit — the Zama Gateway decrypts only for you
+- **Self-decrypt**: View your position by signing an EIP-712 permit; the Zama Gateway decrypts only for you
 - **Health-based liquidation**: Liquidators call `checkHealth()` which returns a boolean; they cannot infer position size
-- **Share-based lending pool**: Lenders deposit ETH, earn 5% APR from borrower interest, withdraw proportionally
+- **Share-based lending pool**: Lenders deposit USDC, earn 5% APR from borrower interest, withdraw proportionally
 - **Client-side encryption**: `encryptUint128()` runs in the browser via `@zama-fhe/relayer-sdk/web` before any tx is broadcast
 
 ---
@@ -58,21 +58,20 @@ Borrow and lend ETH without revealing your collateral or debt on-chain. Collater
 
 | Contract | Address | Description |
 |----------|---------|-------------|
-| PrivLendPool | [`0xE6c99...2f4D3`](https://sepolia.etherscan.io/address/0xE6c999817fE5Fa88223abeC51EF17B57dEe2f4D3) | Core lending pool with FHE-encrypted collateral and debt |
+| PrivLendPool | [`0x41832...e9e8f`](https://sepolia.etherscan.io/address/0x41832b84dFa5f3a9Bf31a15Fa00B5b39DB3e9e8f) | Core lending pool with FHE-encrypted collateral and debt |
 
 Key functions:
 
 | Function | Access | Description |
 |----------|--------|-------------|
-| `depositCollateral(bytes32, bytes)` | Public | FHE-encrypt and store collateral |
-| `borrow(bytes32, bytes, uint256)` | Public | Borrow against collateral (max 66.67% LTV) |
-| `repay(bytes32, bytes)` | Public payable | Repay debt with encrypted amount |
-| `withdrawCollateral(uint256)` | Public | Withdraw collateral (requires zero debt) |
-| `lend()` | Public payable | Add ETH liquidity, receive shares |
-| `withdrawLiquidity(uint256)` | Public | Redeem shares for ETH |
-| `checkHealth(address)` | Public view | Returns health boolean (plaintext) |
-| `userDecryptCollateral(address)` | FHEVM | Gateway-triggered decrypt for collateral |
-| `userDecryptDebt(address)` | FHEVM | Gateway-triggered decrypt for debt |
+| `deposit(bytes32, bytes)` | Public payable | FHE-encrypt and store ETH collateral |
+| `borrow(bytes32, bytes, uint256)` | Public | Borrow USDC against collateral (max 66.67% LTV) |
+| `repay(bytes32, bytes, uint256)` | Public | Repay USDC debt with encrypted amount |
+| `withdrawCollateral(uint256)` | Public | Withdraw ETH collateral (requires zero debt) |
+| `lend(uint256)` | Public | Deposit USDC liquidity, receive shares |
+| `withdrawLiquidity(uint256)` | Public | Redeem shares for USDC |
+| `checkHealth(address)` | Public | Emits health result; liquidators use this |
+| `liquidate(address, uint256)` | Public | Liquidate an unhealthy position |
 
 ---
 
@@ -84,16 +83,16 @@ You need MetaMask (or any injected wallet) on **Ethereum Sepolia**.
 2. Open the app and click **Connect Wallet** in the top-right
 3. If prompted, switch to Sepolia — the app shows a banner with a one-click switch button
 
-**To lend ETH:**
+**To lend USDC:**
 1. Go to the **Lend** page
-2. Enter an amount (e.g. `0.01`) and click **Add Liquidity**
+2. Approve the USDC spend, enter an amount and click **Add Liquidity**
 3. Confirm in MetaMask — your shares appear in the Deposited field
 
-**To borrow ETH:**
-1. Go to **Borrow** and enter an amount in **Deposit Collateral**, then click **Deposit (Encrypted)**
+**To borrow USDC:**
+1. Go to **Borrow** and enter an ETH amount in **Deposit Collateral**, then click **Deposit (Encrypted)**
 2. MetaMask will ask you to sign the FHE input proof, then confirm the transaction
-3. Once confirmed, enter a borrow amount (max 66.67% of collateral) in **Borrow ETH**
-4. Confirm the tx — ETH lands in your wallet
+3. Once confirmed, enter a borrow amount (max 66.67% of collateral value) in **Borrow USDC**
+4. Confirm the tx — USDC lands in your wallet
 
 **To decrypt your position:**
 1. On the Borrow page, find the **My Encrypted Position** panel on the right
@@ -165,7 +164,7 @@ npx hardhat test
 ```
 privlend/
 ├── contracts/
-│   └── PrivLendPool.sol       # Core FHE lending pool (ETH-based)
+│   └── PrivLendPool.sol       # Core FHE lending pool (ETH collateral, USDC borrow)
 ├── test/
 │   └── PrivLendPool.test.ts   # Hardhat tests (8 cases)
 ├── scripts/
@@ -178,7 +177,7 @@ privlend/
     │   └── dashboard/page.tsx  # Position + quick actions
     ├── components/
     │   ├── DepositPanel.tsx    # Collateral deposit (FHE)
-    │   ├── BorrowPanel.tsx     # Borrow ETH
+    │   ├── BorrowPanel.tsx     # Borrow USDC
     │   ├── RepayPanel.tsx      # Repay loan (FHE)
     │   ├── WithdrawCollateralPanel.tsx
     │   ├── LenderPanel.tsx     # Add/withdraw liquidity

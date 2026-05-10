@@ -37,14 +37,15 @@ async function main() {
   console.log("      tx:", lendTx.hash);
   console.log("      Lender deposited 20,000 USDC to pool");
 
-  // Step 2: Borrower deposits 0.5 ETH collateral (encrypted via FHEVM)
-  console.log("\n[2/4] Borrower deposits 0.5 ETH collateral (encrypted)...");
+  // Step 2: Borrower deposits 0.0001 ETH collateral (encrypted via FHEVM)
+  // Using minimal amount due to testnet wallet constraints
+  console.log("\n[2/4] Borrower deposits 0.0001 ETH collateral (encrypted)...");
   const fhevmInstance = await createInstance({
     ...SepoliaConfig,
     network: process.env.SEPOLIA_RPC_URL ?? "https://ethereum-sepolia-rpc.publicnode.com",
   });
 
-  const depositAmount = ethers.parseEther("0.5");
+  const depositAmount = ethers.parseEther("0.0001");
   const input = await fhevmInstance.createEncryptedInput(CONTRACT_ADDRESS, borrower.address);
   input.add128(depositAmount);
   const { handles, inputProof } = await input.encrypt();
@@ -53,23 +54,23 @@ async function main() {
   });
   await depositTx.wait();
   console.log("      tx:", depositTx.hash);
-  console.log("      Borrower deposited 0.5 ETH collateral");
+  console.log("      Borrower deposited 0.0001 ETH collateral");
 
-  // Step 3: Borrower borrows 500 USDC (max ~667 USDC at 66.67% LTV on $1000 collateral)
-  console.log("\n[3/4] Borrower borrows 500 USDC (encrypted)...");
-  const borrowUsdc = 500n * 10n ** 6n; // 500 USDC
+  // Step 3: Borrower borrows 0.1 USDC (max ~0.133 USDC at 66.67% LTV on $0.20 collateral)
+  console.log("\n[3/4] Borrower borrows 0.10 USDC (encrypted)...");
+  const borrowUsdc = 100_000n; // 0.10 USDC (6 decimals)
   const borrowInput = await fhevmInstance.createEncryptedInput(CONTRACT_ADDRESS, borrower.address);
   borrowInput.add128(borrowUsdc);
   const { handles: bHandles, inputProof: bProof } = await borrowInput.encrypt();
   const borrowTx = await pool.connect(borrower).borrow(bHandles[0], bProof, borrowUsdc);
   await borrowTx.wait();
   console.log("      tx:", borrowTx.hash);
-  console.log("      Borrower received 500 USDC");
+  console.log("      Borrower received 0.10 USDC");
 
   console.log("\n[4/4] Summary:");
-  console.log("  Pool has 19,500 USDC available (20,000 seeded, 500 borrowed)");
-  console.log("  Borrower: 0.5 ETH collateral ($1000), 500 USDC debt");
-  console.log("  Health factor: 1000/750 = 1.33 (healthy, threshold = 1.0)");
+  console.log("  Pool has 19,999.90 USDC available (20,000 seeded, 0.10 borrowed)");
+  console.log("  Borrower: 0.0001 ETH collateral ($0.20 value), 0.10 USDC debt");
+  console.log("  Health factor: 0.20/0.15 = 1.33 (healthy, threshold = 1.0)");
   console.log("\nReady for demo recording.");
 }
 

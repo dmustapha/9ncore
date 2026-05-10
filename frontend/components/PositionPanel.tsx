@@ -31,6 +31,13 @@ export default function PositionPanel({ onDebtDecrypted }: Props) {
   const [revealedRows, setRevealedRows] = useState<boolean[]>([false, false, false, false]);
   const [showConfirm, setShowConfirm] = useState(false);
 
+  // Reset reveal state when wallet address changes
+  useEffect(() => {
+    setRevealed(false);
+    setRevealedRows([false, false, false, false]);
+    setShowConfirm(false);
+  }, [address]);
+
   // When collateralStr becomes available after decrypt, trigger staggered reveal
   useEffect(() => {
     if (collateralStr !== null && !revealed) {
