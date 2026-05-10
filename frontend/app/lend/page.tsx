@@ -15,7 +15,7 @@ export default function LendPage() {
           <div className="panel-label mb-1">LIQUIDITY MANAGEMENT</div>
           <h1 className="text-[#E8EAF0] font-bold text-2xl">Lending Pool</h1>
           <p className="text-[#9CA3AF] text-sm mt-1">
-            Provide ETH liquidity and earn 5% APR from borrower interest.
+            Provide USDC liquidity and earn 5% APR from borrower interest.
           </p>
         </div>
 
@@ -38,9 +38,9 @@ export default function LendPage() {
               <div className="panel-label mb-3">HOW IT WORKS</div>
               <div className="flex flex-col gap-4">
                 {[
-                  { step: "1", title: "Deposit ETH", desc: "Your ETH enters the lending pool. You receive shares proportional to your contribution." },
-                  { step: "2", title: "Earn Interest", desc: "Borrowers pay 5% APR. Interest accrues to the pool, increasing the ETH value of your shares." },
-                  { step: "3", title: "Withdraw Anytime", desc: "Redeem your shares for ETH at the current pool exchange rate." },
+                  { step: "1", title: "Deposit USDC", desc: "Your USDC enters the lending pool. You receive shares proportional to your contribution." },
+                  { step: "2", title: "Earn Interest", desc: "Borrowers pay 5% APR. Interest accrues to the pool, increasing the USDC value of your shares." },
+                  { step: "3", title: "Withdraw Anytime", desc: "Redeem your shares for USDC at the current pool exchange rate." },
                 ].map((s) => (
                   <div key={s.step} className="flex gap-3">
                     <div

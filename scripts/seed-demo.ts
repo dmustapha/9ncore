@@ -1,7 +1,5 @@
 // File: scripts/seed-demo.ts
-// Winning Pattern #19 — Seed demo script: pre-populates borrower positions so judges
-// see realistic data on first visit. Run AFTER Phase 3 deploy with PRIVLEND_POOL_ADDRESS set.
-// DEV-005: aclAddress corrected from stale 0x339EcE... to live 0xf0Ffdc... (getCode() verified)
+// Seeds the demo: lender deposits USDC, borrower deposits ETH collateral and borrows USDC.
 
 import { ethers } from "hardhat";
 import { createInstance, SepoliaConfig } from "@zama-fhe/relayer-sdk/node";
@@ -9,33 +7,44 @@ import { createInstance, SepoliaConfig } from "@zama-fhe/relayer-sdk/node";
 async function main() {
   const signers = await ethers.getSigners();
   const deployer = signers[0];
-  const borrower = signers[1] ?? signers[0]; // fallback to deployer if only one key configured
+  const borrower = signers[1] ?? signers[0];
   const CONTRACT_ADDRESS = process.env.PRIVLEND_POOL_ADDRESS;
+  const USDC_ADDRESS = process.env.MOCKUSDC_ADDRESS;
   if (!CONTRACT_ADDRESS) throw new Error("Set PRIVLEND_POOL_ADDRESS in .env before seeding");
+  if (!USDC_ADDRESS) throw new Error("Set MOCKUSDC_ADDRESS in .env before seeding");
 
-  console.log("=== PrivLend Demo Seed ===");
-  console.log("Contract :", CONTRACT_ADDRESS);
-  console.log("Deployer :", deployer.address);
-  console.log("Borrower :", borrower.address);
+  console.log("=== PrivLend Demo Seed (ETH collateral / USDC borrow) ===");
+  console.log("Pool   :", CONTRACT_ADDRESS);
+  console.log("USDC   :", USDC_ADDRESS);
+  console.log("Lender :", deployer.address);
+  console.log("Borrower:", borrower.address);
 
   const PrivLendPool = await ethers.getContractFactory("PrivLendPool");
   const pool = PrivLendPool.attach(CONTRACT_ADDRESS) as any;
 
-  // Step 1: Lender deposits 0.04 ETH liquidity (reduced to fit testnet budget)
-  console.log("\n[1/3] Lender deposits 0.04 ETH ...");
-  const lendTx = await pool.connect(deployer).lend({ value: ethers.parseEther("0.04") });
+  const MockUSDC = await ethers.getContractFactory("MockUSDC");
+  const usdc = MockUSDC.attach(USDC_ADDRESS) as any;
+
+  // Step 1: Mint USDC for lender and seed pool with 20,000 USDC
+  console.log("\n[1/4] Minting 20,000 USDC to lender and approving pool...");
+  const seedUsdc = 20_000n * 10n ** 6n; // 20,000 USDC
+  const mintTx = await usdc.connect(deployer).mint(deployer.address, seedUsdc);
+  await mintTx.wait();
+  const approveTx = await usdc.connect(deployer).approve(CONTRACT_ADDRESS, seedUsdc);
+  await approveTx.wait();
+  const lendTx = await pool.connect(deployer).lend(seedUsdc);
   await lendTx.wait();
   console.log("      tx:", lendTx.hash);
+  console.log("      Lender deposited 20,000 USDC to pool");
 
-  // Step 2: Borrower deposits 0.02 ETH collateral (encrypted via FHEVM)
-  console.log("\n[2/3] Borrower deposits 0.02 ETH collateral (encrypted) ...");
-  // DEV-005: use SepoliaConfig from sdk (correct addresses; relayerUrl included)
+  // Step 2: Borrower deposits 0.5 ETH collateral (encrypted via FHEVM)
+  console.log("\n[2/4] Borrower deposits 0.5 ETH collateral (encrypted)...");
   const fhevmInstance = await createInstance({
     ...SepoliaConfig,
     network: process.env.SEPOLIA_RPC_URL ?? "https://ethereum-sepolia-rpc.publicnode.com",
   });
 
-  const depositAmount = ethers.parseEther("0.02");
+  const depositAmount = ethers.parseEther("0.5");
   const input = await fhevmInstance.createEncryptedInput(CONTRACT_ADDRESS, borrower.address);
   input.add128(depositAmount);
   const { handles, inputProof } = await input.encrypt();
@@ -44,20 +53,24 @@ async function main() {
   });
   await depositTx.wait();
   console.log("      tx:", depositTx.hash);
+  console.log("      Borrower deposited 0.5 ETH collateral");
 
-  // Step 3: Borrower borrows 0.01 ETH
-  console.log("\n[3/3] Borrower borrows 0.01 ETH ...");
-  const borrowAmount = ethers.parseEther("0.01");
+  // Step 3: Borrower borrows 500 USDC (max ~667 USDC at 66.67% LTV on $1000 collateral)
+  console.log("\n[3/4] Borrower borrows 500 USDC (encrypted)...");
+  const borrowUsdc = 500n * 10n ** 6n; // 500 USDC
   const borrowInput = await fhevmInstance.createEncryptedInput(CONTRACT_ADDRESS, borrower.address);
-  borrowInput.add128(borrowAmount);
+  borrowInput.add128(borrowUsdc);
   const { handles: bHandles, inputProof: bProof } = await borrowInput.encrypt();
-  const borrowTx = await pool.connect(borrower).borrow(bHandles[0], bProof, borrowAmount);
+  const borrowTx = await pool.connect(borrower).borrow(bHandles[0], bProof, borrowUsdc);
   await borrowTx.wait();
   console.log("      tx:", borrowTx.hash);
+  console.log("      Borrower received 500 USDC");
 
-  console.log("\n✅ Demo seed complete. Borrower has 0.02 ETH collateral, 0.01 ETH debt.");
-  console.log("   Health ratio ≈ 200% — position healthy, visible to borrower via decrypt.");
-  console.log("   Ready to record demo video.");
+  console.log("\n[4/4] Summary:");
+  console.log("  Pool has 19,500 USDC available (20,000 seeded, 500 borrowed)");
+  console.log("  Borrower: 0.5 ETH collateral ($1000), 500 USDC debt");
+  console.log("  Health factor: 1000/750 = 1.33 (healthy, threshold = 1.0)");
+  console.log("\nReady for demo recording.");
 }
 
 main().catch((e) => {

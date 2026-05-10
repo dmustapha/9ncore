@@ -1,6 +1,12 @@
 export const PRIVLEND_ABI = [
   // Lender ops
-  { type: "function", name: "lend", stateMutability: "payable", inputs: [], outputs: [] },
+  {
+    type: "function",
+    name: "lend",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "amount", type: "uint256" }],
+    outputs: [],
+  },
   {
     type: "function",
     name: "withdrawLiquidity",
@@ -33,17 +39,18 @@ export const PRIVLEND_ABI = [
     inputs: [
       { name: "inputHandle", type: "bytes32" },
       { name: "inputProof", type: "bytes" },
-      { name: "plainAmount", type: "uint256" },
+      { name: "plainUsdcAmount", type: "uint256" },
     ],
     outputs: [],
   },
   {
     type: "function",
     name: "repay",
-    stateMutability: "payable",
+    stateMutability: "nonpayable",
     inputs: [
       { name: "inputHandle", type: "bytes32" },
       { name: "inputProof", type: "bytes" },
+      { name: "plainUsdcAmount", type: "uint256" },
     ],
     outputs: [],
   },
@@ -57,18 +64,18 @@ export const PRIVLEND_ABI = [
   {
     type: "function",
     name: "liquidate",
-    stateMutability: "payable",
+    stateMutability: "nonpayable",
     inputs: [
       { name: "borrower", type: "address" },
-      { name: "inputHandle", type: "bytes32" },
-      { name: "inputProof", type: "bytes" },
+      { name: "repayUsdc", type: "uint256" },
     ],
     outputs: [],
   },
   // View functions
   { type: "function", name: "lendingPool", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
   { type: "function", name: "totalShares", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
-  { type: "function", name: "totalETH", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
+  { type: "function", name: "totalUSDC", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
+  { type: "function", name: "totalCollateralETH", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
   { type: "function", name: "availableToLend", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
   { type: "function", name: "utilizationBps", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
   {
@@ -119,7 +126,7 @@ export const PRIVLEND_ABI = [
     name: "Deposited",
     inputs: [
       { name: "borrower", type: "address", indexed: true },
-      { name: "amount", type: "uint256", indexed: false },
+      { name: "ethAmount", type: "uint256", indexed: false },
     ],
   },
   {
@@ -127,7 +134,7 @@ export const PRIVLEND_ABI = [
     name: "CollateralWithdrawn",
     inputs: [
       { name: "borrower", type: "address", indexed: true },
-      { name: "amount", type: "uint256", indexed: false },
+      { name: "ethAmount", type: "uint256", indexed: false },
     ],
   },
   {
@@ -135,7 +142,7 @@ export const PRIVLEND_ABI = [
     name: "Borrowed",
     inputs: [
       { name: "borrower", type: "address", indexed: true },
-      { name: "amount", type: "uint256", indexed: false },
+      { name: "usdcAmount", type: "uint256", indexed: false },
     ],
   },
   {
@@ -143,7 +150,7 @@ export const PRIVLEND_ABI = [
     name: "Repaid",
     inputs: [
       { name: "borrower", type: "address", indexed: true },
-      { name: "amount", type: "uint256", indexed: false },
+      { name: "usdcAmount", type: "uint256", indexed: false },
     ],
   },
   {
@@ -152,7 +159,7 @@ export const PRIVLEND_ABI = [
     inputs: [
       { name: "borrower", type: "address", indexed: true },
       { name: "liquidator", type: "address", indexed: true },
-      { name: "repayAmount", type: "uint256", indexed: false },
+      { name: "usdcRepaid", type: "uint256", indexed: false },
     ],
   },
   {
@@ -160,7 +167,7 @@ export const PRIVLEND_ABI = [
     name: "LiquidityAdded",
     inputs: [
       { name: "lender", type: "address", indexed: true },
-      { name: "ethAmount", type: "uint256", indexed: false },
+      { name: "usdcAmount", type: "uint256", indexed: false },
       { name: "sharesIssued", type: "uint256", indexed: false },
     ],
   },
@@ -169,7 +176,7 @@ export const PRIVLEND_ABI = [
     name: "LiquidityRemoved",
     inputs: [
       { name: "lender", type: "address", indexed: true },
-      { name: "ethAmount", type: "uint256", indexed: false },
+      { name: "usdcAmount", type: "uint256", indexed: false },
       { name: "sharesBurned", type: "uint256", indexed: false },
     ],
   },
@@ -183,10 +190,53 @@ export const PRIVLEND_ABI = [
   },
 ] as const;
 
+export const USDC_ABI = [
+  {
+    type: "function",
+    name: "approve",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "spender", type: "address" },
+      { name: "amount", type: "uint256" },
+    ],
+    outputs: [{ type: "bool" }],
+  },
+  {
+    type: "function",
+    name: "allowance",
+    stateMutability: "view",
+    inputs: [
+      { name: "owner", type: "address" },
+      { name: "spender", type: "address" },
+    ],
+    outputs: [{ type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "balanceOf",
+    stateMutability: "view",
+    inputs: [{ name: "account", type: "address" }],
+    outputs: [{ type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "faucet",
+    stateMutability: "nonpayable",
+    inputs: [],
+    outputs: [],
+  },
+] as const;
+
 if (!process.env.NEXT_PUBLIC_CONTRACT_ADDRESS) {
   throw new Error("Missing NEXT_PUBLIC_CONTRACT_ADDRESS — check your .env.local");
 }
 export const CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`;
+
+if (!process.env.NEXT_PUBLIC_USDC_ADDRESS) {
+  throw new Error("Missing NEXT_PUBLIC_USDC_ADDRESS — check your .env.local");
+}
+export const USDC_ADDRESS =
+  process.env.NEXT_PUBLIC_USDC_ADDRESS as `0x${string}`;
 
 export const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? 11155111);

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useAccount, useReadContracts } from "wagmi";
-import { parseEther, formatEther } from "viem";
+import { parseUnits } from "viem";
 import { PRIVLEND_ABI, CONTRACT_ADDRESS } from "@/lib/contract";
 import { encryptUint128 } from "@/lib/fhevm";
 import { useSepoliaWrite } from "@/hooks/useSepoliaWrite";
@@ -24,20 +24,24 @@ export default function BorrowPanel() {
     ],
     query: { enabled: !!address, refetchInterval: 10_000 },
   });
-  const plainDebtWei = posData?.[0]?.result as bigint | undefined;
-  const maxBorrowWei = posData?.[1]?.result as bigint | undefined;
+
+  // plainDebt and maxBorrowable are both in USDC units (6 decimals)
+  const plainDebtUnits  = posData?.[0]?.result as bigint | undefined;
+  const maxBorrowUnits  = posData?.[1]?.result as bigint | undefined;
+
+  const fmtUsdc = (units: bigint) => "$" + (Number(units) / 1e6).toFixed(2);
 
   async function handleBorrow() {
     if (!amount || !address) return;
     setError(null);
 
-    const amountWei = parseEther(amount);
-    if (maxBorrowWei !== undefined && amountWei > maxBorrowWei) {
-      setError(`Exceeds max borrowable (${Number(formatEther(maxBorrowWei)).toFixed(4)} ETH). Deposit more collateral first.`);
+    const amountUnits = parseUnits(amount, 6); // USDC 6 decimals
+    if (amountUnits <= 0n) {
+      setError("Amount must be greater than zero.");
       return;
     }
-    if (amountWei <= 0n) {
-      setError("Amount must be greater than zero.");
+    if (maxBorrowUnits !== undefined && amountUnits > maxBorrowUnits) {
+      setError(`Exceeds max borrowable (${fmtUsdc(maxBorrowUnits)}). Deposit more ETH collateral first.`);
       return;
     }
 
@@ -46,7 +50,7 @@ export default function BorrowPanel() {
       const { handles, inputProof } = await encryptUint128(
         CONTRACT_ADDRESS,
         address,
-        amountWei
+        amountUnits // encrypt the USDC units value
       );
 
       setStatus("submitting");
@@ -54,7 +58,7 @@ export default function BorrowPanel() {
         address: CONTRACT_ADDRESS,
         abi: PRIVLEND_ABI,
         functionName: "borrow",
-        args: [handles[0], inputProof, amountWei],
+        args: [handles[0], inputProof, amountUnits],
       });
 
       setTxHash(hash);
@@ -73,7 +77,7 @@ export default function BorrowPanel() {
         active={status === "encrypting" || status === "submitting"}
         message={
           status === "encrypting"
-            ? "Encrypting borrow amount..."
+            ? "Encrypting borrow amount with FHE..."
             : "Submitting borrow transaction..."
         }
       />
@@ -82,7 +86,7 @@ export default function BorrowPanel() {
         <div className="panel-label">DEBT POSITION</div>
         <span className="badge-enc">● DEBT ENCRYPTED</span>
       </div>
-      <h3 className="text-[#E8EAF0] font-bold text-lg mb-4">Borrow ETH</h3>
+      <h3 className="text-[#E8EAF0] font-bold text-lg mb-4">Borrow USDC</h3>
 
       <div className="flex gap-3 mb-4 flex-wrap">
         <div className="bg-[rgba(45,212,191,0.05)] rounded-md px-3 py-2 border border-[rgba(45,212,191,0.12)]">
@@ -93,21 +97,25 @@ export default function BorrowPanel() {
           <div className="panel-label" style={{ fontSize: "0.6rem" }}>Min Collateral Ratio</div>
           <div className="font-mono text-teal text-sm font-semibold">150%</div>
         </div>
-        {maxBorrowWei !== undefined && (
+        <div className="bg-[rgba(45,212,191,0.05)] rounded-md px-3 py-2 border border-[rgba(45,212,191,0.12)]">
+          <div className="panel-label" style={{ fontSize: "0.6rem" }}>ETH Price (Fixed)</div>
+          <div className="font-mono text-teal text-sm font-semibold">$2,000</div>
+        </div>
+        {maxBorrowUnits !== undefined && (
           <div className="bg-[rgba(45,212,191,0.05)] rounded-md px-3 py-2 border border-[rgba(45,212,191,0.12)]">
             <div className="panel-label" style={{ fontSize: "0.6rem" }}>Max Borrowable</div>
-            <div className="font-mono text-teal text-sm font-semibold">{Number(formatEther(maxBorrowWei)).toFixed(4)} ETH</div>
+            <div className="font-mono text-teal text-sm font-semibold">{fmtUsdc(maxBorrowUnits)}</div>
           </div>
         )}
-        {plainDebtWei !== undefined && plainDebtWei > 0n && (
+        {plainDebtUnits !== undefined && plainDebtUnits > 0n && (
           <div className="bg-[rgba(239,68,68,0.05)] rounded-md px-3 py-2 border border-[rgba(239,68,68,0.12)]">
             <div className="panel-label" style={{ fontSize: "0.6rem" }}>Outstanding Debt</div>
-            <div className="font-mono text-[#EF4444] text-sm font-semibold">{Number(formatEther(plainDebtWei)).toFixed(4)} ETH</div>
+            <div className="font-mono text-[#EF4444] text-sm font-semibold">{fmtUsdc(plainDebtUnits)}</div>
           </div>
         )}
       </div>
 
-      <label className="text-[#9CA3AF] text-xs block mb-2">ETH Amount to Borrow</label>
+      <label className="text-[#9CA3AF] text-xs block mb-2">USDC Amount to Borrow</label>
       <input
         type="number"
         placeholder="0.00"
@@ -121,14 +129,14 @@ export default function BorrowPanel() {
         disabled={(status === "encrypting" || status === "submitting") || !address || !amount}
         className="w-full bg-teal hover:bg-teal/90 text-void font-bold py-3 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
       >
-        {status === "idle" && "Borrow ETH"}
+        {status === "idle" && "Borrow USDC"}
         {status === "encrypting" && "Encrypting..."}
         {status === "submitting" && "Submitting..."}
         {status === "done" && "Borrow More"}
       </button>
 
       <p className="text-[#4B5563] text-xs mt-2 font-mono">
-        Ensure collateral ratio stays above 150% to avoid liquidation threshold.
+        Keep your collateral ratio above 150% to avoid liquidation.
       </p>
 
       {txHash && (

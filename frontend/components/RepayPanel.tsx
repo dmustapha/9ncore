@@ -1,35 +1,84 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAccount, useReadContracts } from "wagmi";
-import { parseEther, formatEther } from "viem";
-import { PRIVLEND_ABI, CONTRACT_ADDRESS } from "@/lib/contract";
+import { parseUnits, formatUnits } from "viem";
+import { PRIVLEND_ABI, USDC_ABI, CONTRACT_ADDRESS, USDC_ADDRESS } from "@/lib/contract";
 import { encryptUint128 } from "@/lib/fhevm";
 import { useSepoliaWrite } from "@/hooks/useSepoliaWrite";
 import FHEProgress from "./FHEProgress";
 
-export default function RepayPanel() {
+interface Props {
+  /** Pre-fills repay amount from decrypted position (Phase 5.1). USDC units (6 dec). */
+  suggestedAmountUnits?: bigint | null;
+}
+
+export default function RepayPanel({ suggestedAmountUnits }: Props) {
   const { address } = useAccount();
   const [amount, setAmount] = useState("");
-  const [status, setStatus] = useState<"idle" | "encrypting" | "submitting" | "done">("idle");
+  const [status, setStatus] = useState<"idle" | "approving" | "encrypting" | "submitting" | "done">("idle");
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   const { writeContractAsync } = useSepoliaWrite();
 
-  const contract = { address: CONTRACT_ADDRESS, abi: PRIVLEND_ABI } as const;
-  const { data: debtData, refetch: refetchDebt } = useReadContracts({
-    contracts: [{ ...contract, functionName: "plainDebt", args: address ? [address] : undefined }],
+  // Pre-fill from decrypted position
+  useEffect(() => {
+    if (suggestedAmountUnits && suggestedAmountUnits > 0n && !amount) {
+      setAmount(formatUnits(suggestedAmountUnits, 6));
+    }
+  }, [suggestedAmountUnits]);
+
+  const poolContract = { address: CONTRACT_ADDRESS, abi: PRIVLEND_ABI } as const;
+  const usdcContract = { address: USDC_ADDRESS, abi: USDC_ABI } as const;
+
+  const { data: repayData, refetch: refetchDebt } = useReadContracts({
+    contracts: [
+      { ...poolContract, functionName: "plainDebt", args: address ? [address] : undefined },
+      { ...usdcContract, functionName: "balanceOf", args: address ? [address] : undefined },
+      { ...usdcContract, functionName: "allowance", args: address ? [address, CONTRACT_ADDRESS] : undefined },
+    ],
     query: { enabled: !!address, refetchInterval: 10_000 },
   });
-  const plainDebtWei = debtData?.[0]?.result as bigint | undefined;
+
+  const plainDebtUnits  = repayData?.[0]?.result as bigint | undefined;
+  const usdcBalance     = repayData?.[1]?.result as bigint | undefined;
+  const usdcAllowance   = repayData?.[2]?.result as bigint | undefined;
+
+  const amountUnits = amount ? parseUnits(amount, 6) : 0n;
+  const needsApproval = usdcAllowance !== undefined && amountUnits > usdcAllowance;
+
+  const fmtUsdc = (units: bigint) => "$" + (Number(units) / 1e6).toFixed(2);
+
+  async function handleApprove() {
+    if (!amount || !address) return;
+    setError(null);
+    try {
+      setStatus("approving");
+      const hash = await writeContractAsync({
+        address: USDC_ADDRESS,
+        abi: USDC_ABI,
+        functionName: "approve",
+        args: [CONTRACT_ADDRESS, amountUnits],
+      });
+      setTxHash(hash);
+      refetchDebt();
+    } catch (e: any) {
+      setError((e as any).shortMessage ?? e.message ?? "Approval failed");
+    } finally {
+      setStatus("idle");
+    }
+  }
 
   async function handleRepay() {
     if (!amount || !address) return;
     setError(null);
 
-    const amountWei = parseEther(amount);
-    if (amountWei <= 0n) {
+    if (amountUnits <= 0n) {
       setError("Amount must be greater than zero.");
+      return;
+    }
+    if (usdcBalance !== undefined && amountUnits > usdcBalance) {
+      setError(`Insufficient USDC balance (${fmtUsdc(usdcBalance)} available).`);
       return;
     }
 
@@ -38,7 +87,7 @@ export default function RepayPanel() {
       const { handles, inputProof } = await encryptUint128(
         CONTRACT_ADDRESS,
         address,
-        amountWei
+        amountUnits
       );
 
       setStatus("submitting");
@@ -46,8 +95,7 @@ export default function RepayPanel() {
         address: CONTRACT_ADDRESS,
         abi: PRIVLEND_ABI,
         functionName: "repay",
-        args: [handles[0], inputProof],
-        value: amountWei,
+        args: [handles[0], inputProof, amountUnits],
       });
 
       setTxHash(hash);
@@ -60,26 +108,32 @@ export default function RepayPanel() {
     }
   }
 
+  const busy = status === "approving" || status === "encrypting" || status === "submitting";
+
   return (
     <div className="panel">
       <FHEProgress
         active={status === "encrypting" || status === "submitting"}
-        message="Processing repayment with interest calculation..."
+        message={
+          status === "encrypting"
+            ? "Encrypting repay amount with FHE..."
+            : "Submitting repayment transaction..."
+        }
       />
 
       <div className="panel-label">DEBT REPAYMENT</div>
-      <h3 className="text-[#E8EAF0] font-bold text-lg mb-4">Repay Loan</h3>
+      <h3 className="text-[#E8EAF0] font-bold text-lg mb-4">Repay USDC Loan</h3>
 
-      {plainDebtWei !== undefined && (
+      {plainDebtUnits !== undefined && (
         <div className="flex items-center justify-between mb-3">
           <span className="text-[#9CA3AF] text-xs">Outstanding debt (principal)</span>
           <div className="flex items-center gap-2">
             <span className="text-[#EF4444] text-xs font-mono font-semibold">
-              {Number(formatEther(plainDebtWei)).toFixed(6)} ETH
+              {fmtUsdc(plainDebtUnits)}
             </span>
-            {plainDebtWei > 0n && (
+            {plainDebtUnits > 0n && (
               <button
-                onClick={() => setAmount(formatEther(plainDebtWei))}
+                onClick={() => setAmount(formatUnits(plainDebtUnits, 6))}
                 className="text-teal text-xs underline hover:no-underline"
               >
                 Use
@@ -88,7 +142,15 @@ export default function RepayPanel() {
           </div>
         </div>
       )}
-      <label className="text-[#9CA3AF] text-xs block mb-2">ETH Amount to Repay</label>
+
+      {usdcBalance !== undefined && (
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-[#9CA3AF] text-xs">Wallet USDC</span>
+          <span className="text-teal-soft text-xs font-mono">{fmtUsdc(usdcBalance)}</span>
+        </div>
+      )}
+
+      <label className="text-[#9CA3AF] text-xs block mb-2">USDC Amount to Repay</label>
       <input
         type="number"
         placeholder="0.00"
@@ -97,23 +159,39 @@ export default function RepayPanel() {
         className="field-input mb-4"
       />
 
-      <button
-        onClick={handleRepay}
-        disabled={(status === "encrypting" || status === "submitting") || !address || !amount}
-        className="w-full bg-teal hover:bg-teal/90 text-void font-bold py-3 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-      >
-        {status === "idle" && "Repay Loan"}
-        {status === "encrypting" && "Encrypting..."}
-        {status === "submitting" && "Submitting..."}
-        {status === "done" && "Repay More"}
-      </button>
+      {needsApproval ? (
+        <button
+          onClick={handleApprove}
+          disabled={busy || !address || !amount}
+          className="w-full bg-teal hover:bg-teal/90 text-void font-bold py-3 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed mb-2"
+        >
+          {status === "approving" ? "Approving..." : "Approve USDC"}
+        </button>
+      ) : (
+        <button
+          onClick={handleRepay}
+          disabled={busy || !address || !amount}
+          className="w-full bg-teal hover:bg-teal/90 text-void font-bold py-3 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {status === "idle" && "Repay Loan"}
+          {status === "encrypting" && "Encrypting..."}
+          {status === "submitting" && "Submitting..."}
+          {status === "done" && "Repay More"}
+        </button>
+      )}
+
+      {needsApproval && (
+        <p className="text-[#9CA3AF] text-xs mt-1 text-center">
+          Step 1 of 2. After approving, click Repay Loan.
+        </p>
+      )}
 
       <div className="mt-3 flex items-start gap-2 bg-[rgba(45,212,191,0.04)] rounded-md p-3 border border-[rgba(45,212,191,0.12)]">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="mt-0.5 shrink-0">
           <path d="M7 1a6 6 0 1 0 0 12A6 6 0 0 0 7 1Zm0 9V7m0-2h.01" stroke="#5EEAD4" strokeWidth="1.3" strokeLinecap="round"/>
         </svg>
         <span className="text-[#9CA3AF] text-xs leading-relaxed">
-          Interest accrues in encrypted state. The outstanding balance is computed via FHE operations over ciphertext. Overpaying is safe; excess is returned.
+          Interest accrues in encrypted state. The outstanding balance is computed via FHE operations over ciphertext. Overpaying is safe; excess is absorbed by the pool.
         </span>
       </div>
 
