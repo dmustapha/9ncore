@@ -6,6 +6,7 @@ import { parseEther, formatEther } from "viem";
 import { useSepoliaWrite } from "@/hooks/useSepoliaWrite";
 import { PRIVLEND_ABI, CONTRACT_ADDRESS } from "@/lib/contract";
 import { encryptUint128 } from "@/lib/fhevm";
+import { formatUSDC } from "@/lib/utils";
 import FHEProgress from "./FHEProgress";
 
 export default function DepositPanel() {
@@ -26,7 +27,7 @@ export default function DepositPanel() {
     query: { enabled: !!address, refetchInterval: 10_000 },
   });
   const collateralWei = posData?.[0]?.result as bigint | undefined;
-  const maxBorrowWei = posData?.[1]?.result as bigint | undefined;
+  const maxBorrowUsdc = posData?.[1]?.result as bigint | undefined; // USDC units (6 dec)
 
   async function handleDeposit() {
     if (!amount || !address) return;
@@ -98,9 +99,9 @@ export default function DepositPanel() {
               Deposited: <span className="text-teal-soft">{Number(formatEther(collateralWei)).toFixed(4)} ETH</span>
             </span>
           )}
-          {maxBorrowWei !== undefined && (
+          {maxBorrowUsdc !== undefined && (
             <span className="text-[#9CA3AF]">
-              Max borrow: <span className="text-teal-soft">{Number(formatEther(maxBorrowWei)).toFixed(4)} ETH</span>
+              Max borrow: <span className="text-teal-soft">{formatUSDC(maxBorrowUsdc)} USDC</span>
             </span>
           )}
         </div>

@@ -83,7 +83,7 @@ export default function HealthPanel() {
             Liquidator: use your wallet to call userDecrypt on the health flag handle (from HealthChecked event) to see true/false.
           </p>
           <p className="text-[#9CA3AF] text-xs mt-1 leading-relaxed">
-            Borrower: call userDecrypt on the healthNumerator handle to get collateral×100, then divide by your decrypted debt.
+            Borrower: decrypt the healthNumerator handle to get collateral (ETH wei) × 4000. Divide by your decrypted debt (USDC units) × 3,000,000,000,000 to verify the health ratio.
           </p>
         </div>
       )}
