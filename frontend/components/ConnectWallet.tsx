@@ -26,7 +26,7 @@ export default function ConnectWallet() {
           >
             <div className="w-2 h-2 bg-[#EF4444] rounded-full animate-pulse" />
             <span className="text-[#EF4444] text-xs font-semibold font-mono">
-              {isSwitching ? "Switching..." : "Wrong network — click to switch to Sepolia"}
+              {isSwitching ? "Switching..." : "Wrong network. Click to switch to Sepolia."}
             </span>
           </button>
         ) : (

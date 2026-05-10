@@ -5,15 +5,15 @@ import { CONTRACT_ADDRESS } from "@/lib/contract";
 const FHE_OPS = [
   { op: "FHE.fromExternal", desc: "Validate encrypted inputs using zero-knowledge proof of knowledge (ZKPoK) before accepting ciphertext" },
   { op: "FHE.add", desc: "Accumulate collateral and debt balances homomorphically over encrypted ciphertexts" },
-  { op: "FHE.sub", desc: "Reduce encrypted debt balance on repay — subtraction in ciphertext space, no plaintext exposed" },
-  { op: "FHE.mul ×100", desc: "Compute health ratio numerator — multiply encrypted collateral by 100 for fixed-point precision" },
-  { op: "FHE.mul ×150", desc: "Compute health ratio denominator — multiply encrypted debt by 150 (minimum collateral ratio)" },
-  { op: "FHE.ge", desc: "Compute the health boolean for liquidators: encrypted comparison produces a single bit" },
-  { op: "FHE.min", desc: "Cap partial liquidation amount to the outstanding balance — prevents over-liquidation" },
-  { op: "FHE.div", desc: "Interest rate calculation over encrypted principal — division performed homomorphically" },
-  { op: "FHE.allowThis", desc: "Contract self-authorization via ACL — grants the contract permission to operate on its own ciphertexts" },
+  { op: "FHE.sub", desc: "Reduce encrypted debt balance on repay: subtraction in ciphertext space, no plaintext exposed." },
+  { op: "FHE.mul ×100", desc: "Compute health ratio numerator: multiply encrypted collateral by 100 for fixed-point precision." },
+  { op: "FHE.mul ×150", desc: "Compute health ratio denominator: multiply encrypted debt by 150 (minimum collateral ratio)." },
+  { op: "FHE.ge", desc: "Compute the health boolean for liquidators: encrypted comparison produces a single bit." },
+  { op: "FHE.min", desc: "Cap partial liquidation amount to the outstanding balance, preventing over-liquidation." },
+  { op: "FHE.div", desc: "Interest rate calculation over encrypted principal: division performed homomorphically." },
+  { op: "FHE.allowThis", desc: "Contract self-authorization via ACL: grants the contract permission to operate on its own ciphertexts." },
   { op: "FHE.allow", desc: "Grant specific user or liquidator decrypt access to their authorized ciphertexts via ACL" },
-  { op: "FHE.mul ×BPS", desc: "Interest rate basis points multiplication — computes accrued interest over encrypted principal" },
+  { op: "FHE.mul ×BPS", desc: "Interest rate basis points multiplication: computes accrued interest over encrypted principal." },
 ];
 
 export default function Home() {
@@ -45,7 +45,7 @@ export default function Home() {
               <circle cx="4" cy="4" r="4"/>
             </svg>
             <span className="font-mono text-teal-soft text-xs">
-              Powered by Zama FHEVM — Ethereum Sepolia
+              Powered by Zama FHEVM on Ethereum Sepolia
             </span>
           </div>
 
@@ -74,7 +74,7 @@ export default function Home() {
           <h2 className="text-[#E8EAF0] font-bold text-xl mb-3">Provide Liquidity</h2>
           <p className="text-[#9CA3AF] text-sm leading-relaxed mb-6 flex-1">
             Deposit ETH into the lending pool and earn yield from borrower interest. Your share
-            of the pool is tracked proportionally — withdraw at any time.
+            of the pool is tracked proportionally. Withdraw at any time.
           </p>
           <div className="flex gap-3 mb-6 text-xs font-mono flex-wrap">
             {[
@@ -101,7 +101,7 @@ export default function Home() {
           <h2 className="text-[#E8EAF0] font-bold text-xl mb-3">Borrow with Privacy</h2>
           <p className="text-[#9CA3AF] text-sm leading-relaxed mb-6 flex-1">
             Deposit ETH collateral and borrow against it. Your collateral and debt amounts stay
-            encrypted on-chain — only you can decrypt your own position.
+            encrypted on-chain. Only you can decrypt your own position.
           </p>
           <div className="flex gap-3 mb-6 text-xs font-mono flex-wrap">
             {[
@@ -145,7 +145,7 @@ export default function Home() {
               {
                 icon: "O",
                 role: "Observer",
-                desc: "Sees pool totals only — total ETH locked, utilization rate. Zero visibility into individual balances.",
+                desc: "Sees pool totals only: total ETH locked, utilization rate. No visibility into individual balances.",
                 color: "rgba(156,163,175,0.1)",
               },
             ].map((r) => (
