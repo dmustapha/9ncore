@@ -23,10 +23,10 @@ export const metadata: Metadata = {
     "Encrypted DeFi lending powered by Zama FHEVM. Your collateral and debt stay private.",
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png", sizes: "32x32" },
       { url: "/logo.svg", type: "image/svg+xml" },
     ],
-    apple: "/logo.svg",
+    apple: "/icon.png",
   },
 };
 
