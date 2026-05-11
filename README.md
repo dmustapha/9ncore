@@ -9,6 +9,7 @@ Deposit ETH collateral and borrow USDC without revealing your balances on-chain.
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 **Live:** https://9ncore.vercel.app
+**Demo:** https://www.loom.com/share/564bdc5d74da4b5092cd837978689206
 
 ![Landing page](frontend/docs/images/landing.png)
 
