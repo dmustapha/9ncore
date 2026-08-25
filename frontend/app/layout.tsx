@@ -21,6 +21,9 @@ export const metadata: Metadata = {
   title: "9ncore — Confidential Lending Pool",
   description:
     "Encrypted DeFi lending powered by Zama FHEVM. Your collateral and debt stay private.",
+  other: {
+    "ory-verify": "orynth-5437a6a443bd4fae9f602770895f62a2",
+  },
   icons: {
     icon: [
       { url: "/icon.png", type: "image/png", sizes: "32x32" },
